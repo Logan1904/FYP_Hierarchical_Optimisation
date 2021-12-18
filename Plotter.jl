@@ -35,3 +35,5 @@ for i in range(1,stop=size(sectors)[1])
 
     plot!(Functions.draw(sectors[i][1],sectors[i][2],sectors[i][3]), legend=false, colour="red")
 end
+
+savefig("image")
