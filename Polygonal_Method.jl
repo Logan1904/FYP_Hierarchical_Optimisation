@@ -148,6 +148,8 @@ end
 # form and sort contour points
 contour = [intersections[i] for i in range(1,stop=size(intersections)[1]) if intersections[i].ID == 1]
 contour = Functions.sort(contour)
+
+sectors = []
 for i in range(1,stop=size(contour)[1])
     next_iterator = mod1(i+1,size(contour)[1])
     
@@ -173,5 +175,6 @@ for i in range(1,stop=size(contour)[1])
         end
         
         global area = area + 0.5*angle*(common_circles[1].R)^2
+        push!(sectors,[circle,theta1,theta2])
     end
 end

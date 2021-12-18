@@ -62,9 +62,6 @@ function boundary(A::Circle,point::Point)
 end
 
 function draw(A::Circle,theta1,theta2)
-    if theta1 > theta2
-        theta2 = theta2 + 2*pi
-    end
     arr = LinRange(theta1,theta2,101)
     return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
 end
