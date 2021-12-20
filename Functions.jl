@@ -50,7 +50,6 @@ function intersection(A::Circle,B::Circle)
 
         return x1,y1,x2,y2
     end
-    
 end
 
 # Take a Point object and checks if its within Circle object
