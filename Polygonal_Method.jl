@@ -125,7 +125,7 @@ end
 #form circle associations
 contour = []
 contour_circles = [point for point in circles if point.Contained != 1]
-for i in range(1,stop=length(circles))
+for i in range(1,stop=length(contour_circles))
     A = contour_circles[i]
     push!(contour,[A.Points,A])
 end
