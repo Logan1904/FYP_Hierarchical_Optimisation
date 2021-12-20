@@ -6,6 +6,7 @@ mutable struct Circle
     y::Float64
     R::Float64
     Points::Any
+    Contained::Int64
 end
 
 mutable struct Point
@@ -29,6 +30,7 @@ function intersection(A::Circle,B::Circle)
     if d > A.R + B.R            #non-intersecting
         return nothing
     elseif d < abs(A.R - B.R)   #one circle within another
+        contained(A,B)
         return nothing
     elseif d == 0 && A.R == B.R #coincident circles
         return nothing
@@ -45,12 +47,26 @@ function intersection(A::Circle,B::Circle)
         y2 = vary + h*(B.x-A.x)/d
 
         if x1 == x2 && y1 == y2
+            contained(A,B)
             return nothing
         end
 
         return x1,y1,x2,y2
     end
 end
+
+# check if one Circle object within another Circle object
+function contained(A::Circle,B::Circle)
+    d = distance(A,B)
+    if d <= abs(A.R - B.R)
+        if A.R < B.R
+            A.Contained = 1
+        else
+            B.Contained = 1
+        end
+    end
+end
+
 
 # Take a Point object and checks if its within Circle object
 function boundary(A::Circle,point::Point)

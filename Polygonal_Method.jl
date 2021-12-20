@@ -5,7 +5,7 @@ for i in range(1,stop=N)
     x,y = rand(-10:10,2)
     R = rand(2:5,1)[1]
 
-    push!(circles,Functions.Circle(x,y,R,[]))
+    push!(circles,Functions.Circle(x,y,R,[],0))
 end
 
 #circles = [Functions.Circle(-1,0,1,[]),Functions.Circle(1,0,1,[]),Functions.Circle(0,1,1,[]),Functions.Circle(0,-0.5,1,[]),
@@ -113,7 +113,7 @@ end
 # sort polygon points ACW and obtain area
 area = 0
 for i in range(1,stop=size(polygon)[1])
-    
+
     dummy = [point for point in polygon[i] if isa(point,Functions.Circle) == true]
     mean_x = sum([point.x for point in dummy])/2
     mean_y = sum([point.y for point in dummy])/2
@@ -122,7 +122,7 @@ for i in range(1,stop=size(polygon)[1])
     global area = area + Functions.shoelace(polygon[i])
 end
 
-#form contour
+#form circle associations
 contour = []
 for i in range(1,stop=length(circles))
     A = circles[i]
@@ -131,52 +131,13 @@ end
 
 contour = Functions.associate(contour)
 
-"""
-dummy = []
-push!(dummy,contour[1])
-splice!(contour,1)
-
-final = []
-
-while size(contour)[1] != 0
-    super_break = false
-
-    for i in range(1,stop=size(dummy)[1])
-        for j in range(1,stop=size(contour)[1])
-            var1 = dummy[i][1]
-            var2 = contour[j][1]
-
-            common = intersect(var1,var2)
-
-            if size(common)[1] != 0 # there exists a common object
-                push!(dummy,contour[j])
-                splice!(contour,j)
-                super_break = true
-                break
-            end
-
-            if i == size(dummy)[1] && j == size(contour)[1] # no more common objects between original vector and vector of associated objects
-                push!(final,dummy)
-                global dummy = []
-                push!(dummy,contour[1])
-                splice!(contour,1)
-            end
-            
-        end
-        
-        if super_break
-            break
-        end
-    end
-
-    if size(contour)[1] == 0
-        push!(final,dummy)
-    end
-
+# change into vectors of circles
+for i in range(1,stop=size(contour)[1])
+    contour[i] = [point[2] for point in contour[i]]
 end
 
-#contour = Functions.associate(contour)
 
+"""
 # form contour points
 boundary_points = [intersections[i] for i in range(1,stop=size(intersections)[1]) if intersections[i].ID == 1]
 
