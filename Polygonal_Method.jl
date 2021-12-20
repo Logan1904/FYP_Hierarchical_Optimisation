@@ -113,13 +113,13 @@ end
 # sort polygon points ACW and obtain area
 area = 0
 for i in range(1,stop=size(polygon)[1])
-    if size(polygon[i])[1] == 4
+    if size(polygon[i])[1] == 4 # for 4 sided polygon, sort acw with centre as the average of the 2 circular centres
         dummy = [point for point in polygon[i] if isa(point,Functions.Circle) == true]
         mean_x = sum([point.x for point in dummy])/2
         mean_y = sum([point.y for point in dummy])/2
 
         polygon[i] = Functions.sort_acw(polygon[i],mean_x,mean_y)
-    else
+    else # for >4 sided polygon, sort acw/cw by jumping between points and seeing which circle is shared
         dummy = []
         A = [point for point in polygon[i] if typeof(point)==Functions.Point]
         push!(dummy,A[1])
