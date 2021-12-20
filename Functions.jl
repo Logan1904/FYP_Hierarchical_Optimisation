@@ -62,6 +62,9 @@ function boundary(A::Circle,point::Point)
 end
 
 function draw(A::Circle,theta1,theta2)
+    if theta1 > theta2
+        theta2 = theta2 + 2*pi
+    end
     arr = LinRange(theta1,theta2,101)
     return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
 end
@@ -107,4 +110,44 @@ function shoelace(Points)
     return area
 end
 
+# Vector: Any length vector, with each row of form [[Association_Object], Any_Other_Objects]
+function associate(Vector)
+    global dummy = []
+    push!(dummy,Vector[1])
+    splice!(Vector,1)
+
+    final = []
+
+    while size(Vector)[1] != 0
+        var1 = Vector[1][1]
+
+        for i in range(1,stop=size(dummy)[1])
+            var2 = dummy[i][1]
+
+            common = intersect(var1,var2)
+
+            if size(common)[1] != 0 # there exists a common object
+                push!(dummy,Vector[1])
+                splice!(Vector,1)
+                break
+            end
+
+            if i == size(dummy)[1] # no more common objects between original vector and vector of associated objects
+                push!(final,dummy)
+                global dummy = []
+                push!(dummy,Vector[1])
+                splice!(Vector,1)
+            end
+
+        end
+
+        if size(Vector)[1] == 0
+            push!(final,dummy)
+        end
+
+    end
+
+    return final
+
+end
 end
