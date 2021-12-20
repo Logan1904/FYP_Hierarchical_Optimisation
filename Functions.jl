@@ -44,6 +44,10 @@ function intersection(A::Circle,B::Circle)
         x2 = varx - h*(B.y-A.y)/d
         y2 = vary + h*(B.x-A.x)/d
 
+        if x1 == x2 && y1 == y2
+            return nothing
+        end
+
         return x1,y1,x2,y2
     end
     
@@ -70,12 +74,7 @@ function draw(A::Circle,theta1,theta2)
 end
 
 # sort a Vector of points (Circle or Point objects) anticlockwise
-function sort(Points)
-    xarr = [point.x for point in Points]
-    yarr = [point.y for point in Points]
-
-    mean_x = sum(xarr)/length(xarr)
-    mean_y = sum(yarr)/length(yarr)
+function sort_acw(Points,mean_x,mean_y)
 
     for i in range(1,stop=length(Points))
         for j in range(i+1,stop=length(Points))
@@ -143,7 +142,7 @@ function associate(Vector)
                 end
                 
             end
-            
+
             if super_break
                 break
             end

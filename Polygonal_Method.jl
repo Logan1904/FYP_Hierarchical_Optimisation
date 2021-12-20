@@ -113,7 +113,16 @@ end
 # sort polygon points ACW and obtain area
 area = 0
 for i in range(1,stop=size(polygon)[1])
-    polygon[i] = Functions.sort(polygon[i])
+    if size(polygon[i]) == 4
+        dummy = [point for point in polygon[i] if isa(point,Functions.Circle == true)]
+        mean_x = sum([point.x for point in dummy])/2
+        mean_y = sum([point.y for point in dummy])/2
+    else
+        mean_x = sum([point.x for point in polygon[i]])/(size(polygon[i])[1])
+        mean_y = sum([point.y for point in polygon[i]])/(size(polygon[i])[1])
+    end
+
+    polygon[i] = Functions.sort_acw(polygon[i],mean_x,mean_y)
     global area = area + Functions.shoelace(polygon[i])
 end
 
