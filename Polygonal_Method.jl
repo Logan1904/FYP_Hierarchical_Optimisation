@@ -113,12 +113,53 @@ end
 # sort polygon points ACW and obtain area
 area = 0
 for i in range(1,stop=size(polygon)[1])
+    if size(polygon[i])[1] == 4
+        dummy = [point for point in polygon[i] if isa(point,Functions.Circle) == true]
+        mean_x = sum([point.x for point in dummy])/2
+        mean_y = sum([point.y for point in dummy])/2
 
-    dummy = [point for point in polygon[i] if isa(point,Functions.Circle) == true]
-    mean_x = sum([point.x for point in dummy])/2
-    mean_y = sum([point.y for point in dummy])/2
+        polygon[i] = Functions.sort_acw(polygon[i],mean_x,mean_y)
+    else
+        dummy = []
+        A = [point for point in polygon[i] if typeof(point)==Functions.Point]
+        push!(dummy,A[1])
+        splice!(A,1)
 
-    polygon[i] = Functions.sort_acw(polygon[i],mean_x,mean_y)
+        while size(A)[1] != 0
+            for j in range(1,stop=size(A)[1])
+                point = A[j]
+                prev_point = last(dummy)
+
+                if point == prev_point
+                    continue
+                end
+
+                circ1_now = point.A
+                circ2_now = point.B
+                circ1_prev = prev_point.A
+                circ2_prev = prev_point.B
+
+                common_circle = intersect([circ1_now,circ2_now],[circ1_prev,circ2_prev])
+
+                if size(common_circle)[1] != 0
+                    push!(dummy,common_circle[1])
+                    push!(dummy,point)
+                    splice!(A,j)
+                    break
+                end
+            end
+        end
+
+        A1 = dummy[1].A
+        B1 = dummy[1].B
+        A2 = last(dummy).A
+        B2 = last(dummy).B
+
+        common_circle = intersect([A1,B1],[A2,B2])
+
+        push!(dummy,common_circle[1])
+        polygon[i] = dummy
+    end
     global area = area + Functions.shoelace(polygon[i])
 end
 

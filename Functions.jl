@@ -67,7 +67,6 @@ function contained(A::Circle,B::Circle)
     end
 end
 
-
 # Take a Point object and checks if its within Circle object
 function boundary(A::Circle,point::Point)
     x = point.x
