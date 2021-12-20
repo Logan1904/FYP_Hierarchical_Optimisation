@@ -119,26 +119,34 @@ function associate(Vector)
     final = []
 
     while size(Vector)[1] != 0
-        var1 = Vector[1][1]
+        super_break = false
 
         for i in range(1,stop=size(dummy)[1])
-            var2 = dummy[i][1]
+            for j in range(1,stop=size(Vector)[1])
+                var1 = dummy[i][1]
+                var2 = Vector[j][1]
 
-            common = intersect(var1,var2)
+                common = intersect(var1,var2)
 
-            if size(common)[1] != 0 # there exists a common object
-                push!(dummy,Vector[1])
-                splice!(Vector,1)
+                if size(common)[1] != 0 # there exists a common object
+                    push!(dummy,Vector[j])
+                    splice!(Vector,j)
+                    super_break = true
+                    break
+                end
+
+                if i == size(dummy)[1] && j == size(Vector)[1] # no more common objects between original vector and vector of associated objects
+                    push!(final,dummy)
+                    global dummy = []
+                    push!(dummy,Vector[1])
+                    splice!(Vector,1)
+                end
+                
+            end
+            
+            if super_break
                 break
             end
-
-            if i == size(dummy)[1] # no more common objects between original vector and vector of associated objects
-                push!(final,dummy)
-                global dummy = []
-                push!(dummy,Vector[1])
-                splice!(Vector,1)
-            end
-
         end
 
         if size(Vector)[1] == 0
