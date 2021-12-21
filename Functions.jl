@@ -123,7 +123,7 @@ function shoelace(Points)
     return area
 end
 
-# Vector: Any length vector, with each row of form [[Association_Object], Any_Other_Objects]
+# Vector: Any length vector, with each row of form [[Association_Object(s)], Any_Other_Objects]
 function associate(Vector)
     global dummy = []
     push!(dummy,Vector[1])
