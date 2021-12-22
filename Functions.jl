@@ -5,15 +5,15 @@ mutable struct Circle
     x::Float64 
     y::Float64
     R::Float64
-    Points::Any
-    Contained::Int64
+    Points::Any # index of intersection points located on Circle object
+    Circles::Any # index of intersection circles located on Circle object
+    Contained::Int64 # 1 if the Circle object is completely contained by another circle, 0 if not
 end
 
 mutable struct Point
     x::Float64
     y::Float64
-    A::Circle
-    B::Circle
+    Circles::Any # index of the 2 Circle objects that make up the intersection point
     ID::Int64 # 1 if point is on contour, 0 if point contained within a circle, 
 end
 
@@ -79,6 +79,7 @@ function boundary(A::Circle,point::Point)
 
 end
 
+# returns x and y vectors of a Circle object (for plotting)
 function draw(A::Circle,theta1,theta2)
     if theta1 > theta2
         theta2 = theta2 + 2*pi
@@ -110,6 +111,30 @@ function sort_acw(Points,mean_x,mean_y)
     return Points
 end
 
+# sort a vector of Point objects relative to a Circle object in ascending order of Polar angle
+function sort_asc_angle(A::Circle, array)
+    for i in range(1,stop=length(array))
+        for j in range(i+1,stop=length(array))
+            theta1 = mod(atan(array[i].y-A.y,array[i].x-A.x),2*pi)
+            theta2 = mod(atan(array[j].y-A.y,array[j].x-A.x),2*pi)
+            if theta2 < theta1
+                temp = array[i]
+                array[i] = array[j]
+                array[j] = temp
+            end
+        end
+    end
+    return array
+end
+
+# returns a Point object given a Circle object and Polar angle 
+function point_on_circle(A::Circle,theta)
+    x = A.x + A.R*cos(theta)
+    y = A.y + A.R*sin(theta)
+
+    return Functions.Point(x,y,[],0)
+end
+
 # get area from a sorted (ACW/CW) vector of points (Circle or Point objects) using Shoelace Method
 function shoelace(Points)
     xarr = [point.x for point in Points]
@@ -123,7 +148,22 @@ function shoelace(Points)
     return area
 end
 
+function area_sector(array)
+    circle,theta1,theta2 = array
+    if theta1 > theta2
+        theta2 = theta2 + 2*pi
+    end
+
+    angle = theta2 - theta1
+
+    area = 0.5*circle.R^2*angle
+
+    return area
+end
+
+
 # Vector: Any length vector, with each row of form [[Association_Object(s)], Any_Other_Objects]
+# Returns a vector, with each row containing rows in the original Vector that have links between the Association Objects
 function associate(Vector)
     global dummy = []
     push!(dummy,Vector[1])

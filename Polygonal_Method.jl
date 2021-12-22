@@ -5,19 +5,11 @@ for i in range(1,stop=N)
     x,y = rand(-10:10,2)
     R = rand(2:5,1)[1]
 
-    push!(circles,Functions.Circle(x,y,R,[],0))
+    push!(circles,Functions.Circle(x,y,R,[],[],0))
 end
 
-#circles = [Functions.Circle(-1,0,1,[]),Functions.Circle(1,0,1,[]),Functions.Circle(0,1,1,[]),Functions.Circle(0,-0.5,1,[]),
-#Functions.Circle(-1,-2.5,1,[]),Functions.Circle(1,-2.5,1,[]),Functions.Circle(0,-2,1,[]),Functions.Circle(0,-3,1,[])]
-
-#circles = [Functions.Circle(-2,0,1,[]),Functions.Circle(2,0,1,[]),Functions.Circle(2,-0.5,1,[]),Functions.Circle(-2,-0.5,1,[]),
-#Functions.Circle(5,5,1,[]),Functions.Circle(-1,0,0.5,[])]
-
-
-intersections = []
-
 #get intersection points for all circles
+intersections = []
 for i in range(1,stop=length(circles))
     for j in range(i+1,stop=length(circles))
         coords = Functions.intersection(circles[i],circles[j])
@@ -27,21 +19,23 @@ for i in range(1,stop=length(circles))
             A = circles[i]
             B = circles[j]
 
-            P1 = Functions.Point(x1,y1,A,B,1)
-            P2 = Functions.Point(x2,y2,A,B,1)
+            P1 = Functions.Point(x1,y1,[i,j],1)
+            P2 = Functions.Point(x2,y2,[i,j],1)
             push!(intersections,P1)
             push!(intersections,P2)
 
             dum = size(intersections)[1]
-
             push!(A.Points,dum-1,dum)
             push!(B.Points,dum-1,dum)
+
+            push!(A.Circles,j)
+            push!(B.Circles,i)
         end
 
     end
 end
 
-#obtain boundary ID -> 1: on outer contour, 0: contained inside contour
+# obtain boundary ID -> 1: on outer contour, 0: contained inside contour
 for i in range(1,stop=size(intersections)[1])
     point = intersections[i]
 
@@ -60,7 +54,7 @@ for i in range(1,stop=size(intersections)[1])
     end
 end
 
-#form polygons
+# form polygons
 polygon = []
 big_polygon = []
 for i in range(1,stop=length(circles))
@@ -120,8 +114,14 @@ for i in range(1,stop=size(polygon)[1])
 
         polygon[i] = Functions.sort_acw(polygon[i],mean_x,mean_y)
     else # for >4 sided polygon, sort acw/cw by jumping between points and seeing which circle is shared
+
+        if typeof(polygon[i][1]) == Functions.Circle
+            polygon[i] = circshift(polygon[i],1)
+        end
+
         dummy = []
         A = [point for point in polygon[i] if typeof(point)==Functions.Point]
+
         push!(dummy,A[1])
         splice!(A,1)
 
@@ -130,16 +130,10 @@ for i in range(1,stop=size(polygon)[1])
                 point = A[j]
                 prev_point = last(dummy)
 
-                if point == prev_point
-                    continue
-                end
+                point_circles = circles[point.Circles]
+                prev_point_circles = circles[prev_point.Circles]
 
-                circ1_now = point.A
-                circ2_now = point.B
-                circ1_prev = prev_point.A
-                circ2_prev = prev_point.B
-
-                common_circle = intersect([circ1_now,circ2_now],[circ1_prev,circ2_prev])
+                common_circle = intersect(point_circles,prev_point_circles)
 
                 if size(common_circle)[1] != 0
                     push!(dummy,common_circle[1])
@@ -150,20 +144,20 @@ for i in range(1,stop=size(polygon)[1])
             end
         end
 
-        A1 = dummy[1].A
-        B1 = dummy[1].B
-        A2 = last(dummy).A
-        B2 = last(dummy).B
+        first_point_circles = circles[dummy[1].Circles]
+        last_point_circles = circles[last(dummy).Circles]
 
-        common_circle = intersect([A1,B1],[A2,B2])
+        common_circle = intersect(first_point_circles,last_point_circles)
 
         push!(dummy,common_circle[1])
         polygon[i] = dummy
     end
-    global area = area + Functions.shoelace(polygon[i])
+    var = Functions.shoelace(polygon[i])
+    global area = area + var
+    println("Area of polygon ",i,": ",var)
 end
 
-#form circle associations
+# form circle associations
 contour = []
 contour_circles = [point for point in circles if point.Contained != 1]
 for i in range(1,stop=length(contour_circles))
@@ -178,112 +172,55 @@ for i in range(1,stop=size(contour)[1])
     contour[i] = [point[2] for point in contour[i]]
 end
 
-
-"""
-# form contour points
-boundary_points = [intersections[i] for i in range(1,stop=size(intersections)[1]) if intersections[i].ID == 1]
-
-contour = []
-for i in range(1,stop=size(boundary_points)[1])
-    point = boundary_points[i]
-    A = point.A
-    B = point.B
-
-    push!(contour,[[A,B],point])
-end
-
-contour = Functions.associate(contour)
-
-# change into just the point
-for i in range(1,stop=size(contour)[1])
-    storage = []
-    for j in range(1,stop=size(contour[i])[1])
-        point = contour[i][j][3]
-        push!(storage,point)
-    end
-
-    contour[i] = storage
-end
-
-# sort points
-for i in range(1,stop=size(contour)[1])
-    contour[i] = Functions.sort(contour[i])
-end
-
+# form circular sectors
 sectors = []
 for i in range(1,stop=size(contour)[1])
-    for j in range(1,stop=size(contour[i])[1])
-        next_iterator = mod1(j+1,size(contour[i])[1])
-        prev_iterator = mod1(j-1,size(contour[i])[1])
 
-        point1 = contour[i][j]
-        point2 = contour[i][next_iterator]
-        point3 = contour[i][prev_iterator]
-
-        A1 = point1.A
-        B1 = point1.B
-        A2 = point2.A
-        B2 = point2.B
-        A3 = point3.A
-        B3 = point3.B
-    
-        common_circles = intersect([A1,B1],[A2,B2])
-
-        if size(common_circles)[1] == 1
-            circle = common_circles[1]
-        elseif size(common_circles)[1] == 2
-            prev_common_circle = intersect([A1,B1],[A3,B3])[1]
-            circle = setdiff(common_circles,prev_common_circle)[1]
-        end
-
-        theta1 = mod(atan(point1.y-circle.y,point1.x-circle.x),2*pi)
-        theta2 = mod(atan(point2.y-circle.y,point2.x-circle.x),2*pi)
-
-        if theta1 < theta2
-            angle = theta2 - theta1
-        else
-            angle = 2*pi - (theta1-theta2)
-        end
-        
-        global area = area + 0.5*angle*(common_circles[1].R)^2
-        push!(sectors,[circle,theta1,theta2])
+    if size(contour[i])[1] == 1 # just the circle
+        push!(sectors,[contour[i][1],0,2*pi])
+        continue
     end
-end
-    
 
-sectors = []
-for i in range(1,stop=size(contour)[1])
-    for j in range(1,stop=size(contour[i])[1])
+    for j in range(1,stop=size(contour[i])[1]) # obtain circular sectors for each circle 
+        circle = contour[i][j]
+        index = circle.Points
+        boundary_points = [intersections[x] for x in index if intersections[x].ID == 1]
 
+        boundary_points = Functions.sort_asc_angle(circle,boundary_points)
+        theta = [mod(atan(point.y-circle.y,point.x-circle.x),2*pi) for point in boundary_points]
 
+        for k in range(1,stop=length(theta))
+            next_iterator = mod1(k+1,length(theta))
 
-    next_iterator = mod1(i+1,size(contour)[1])
-    
-    point1 = contour[i]
-    point2 = contour[next_iterator]
+            if k == length(theta)
+                half_angle = 0.5*(theta[k]+theta[next_iterator]) + pi
+            else
+                half_angle = 0.5*(theta[k]+theta[next_iterator])
+            end
 
-    A1 = point1.A
-    B1 = point1.B
-    A2 = point2.A
-    B2 = point2.B
+            point_check = Functions.point_on_circle(circle,half_angle)
 
-    common_circles = intersect([A1,B1],[A2,B2])
+            A = circles[circle.Circles]
 
-    if size(common_circles)[1] == 1
-        circle = common_circles[1]
-        theta1 = mod(atan(point1.y-circle.y,point1.x-circle.x),2*pi)
-        theta2 = mod(atan(point2.y-circle.y,point2.x-circle.x),2*pi)
+            for l in range(1,stop=length(A)) # check if point_check is inside any of the circles that intersect our current circle
+                outside = Functions.boundary(A[l],point_check)
+                if outside == 0
+                    break
+                elseif l == length(A)
+                    push!(sectors,[circle,theta[k],theta[next_iterator]])
+                end
+            end
 
-        if theta1 < theta2
-            angle = theta2 - theta1
-        else
-            angle = 2*pi - (theta1-theta2)
         end
-        
-        global area = area + 0.5*angle*(common_circles[1].R)^2
-        push!(sectors,[circle,theta1,theta2])
-    else
 
     end
 end
-"""
+
+# area of circular sectors
+for i in range(1,stop=length(sectors))
+    var = Functions.area_sector(sectors[i])
+    global area = area + var
+    println("Area of sector ",i,": ",var)
+end
+
+println("Total area: ",area)

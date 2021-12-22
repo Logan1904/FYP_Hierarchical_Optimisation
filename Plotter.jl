@@ -3,7 +3,7 @@ p = plot()
 
 # plot circles
 for i in range(1,stop=length(circles))
-    plot!(Functions.draw(circles[i],0,2*pi), aspect_ratio=1, legend=false, color="black")
+    plot!(Functions.draw(circles[i],0,2*pi), aspect_ratio=1, label="", color="black")
 end
 
 # plot intersection points, white = on boundary contour, red = inside boundary contour
@@ -16,7 +16,7 @@ for i in range(1,stop=size(intersections)[1])
         color = "red"
     end
 
-    plot!([point.x], [point.y], seriestype=:scatter, legend=false, color=color)
+    plot!([point.x], [point.y], seriestype=:scatter, label="",color=color)
 end
 
 # plot polygons
@@ -28,15 +28,13 @@ for i in range(1,stop=size(polygon)[1])
     append!(xarr,xarr[1])
     append!(yarr,yarr[1])
 
-    plot!(xarr,yarr,color="blue")
+    plot!(xarr,yarr, label=string("Polygon ",i))
 end
 
-"""
+
 # plot circular sectors
 for i in range(1,stop=size(sectors)[1])
-
-    plot!(Functions.draw(sectors[i][1],sectors[i][2],sectors[i][3]), legend=false, colour="red")
+    plot!(Functions.draw(sectors[i][1],sectors[i][2],sectors[i][3]), label=string("Sector ",i))
 end
-"""
 
 savefig("image")
