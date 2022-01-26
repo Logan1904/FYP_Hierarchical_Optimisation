@@ -7,14 +7,14 @@ mutable struct Circle
     R::Float64
     Points::Any # index of intersection points located on Circle object
     Circles::Any # index of intersection circles located on Circle object
-    Contained::Int64 # 1 if the Circle object is completely contained by another circle, 0 if not
+    Contained::Bool # 1 if the Circle object is completely contained by another circle, 0 if not
 end
 
 mutable struct Point
     x::Float64
     y::Float64
     Circles::Any # index of the 2 Circle objects that make up the intersection point
-    ID::Int64 # 1 if point is on contour, 0 if point contained within a circle, 
+    ID::Bool # 1 if point is on contour, 0 if point contained within a circle, 
 end
 
 # Euclidean distance between centres of 2 Circle objects
@@ -60,9 +60,9 @@ function contained(A::Circle,B::Circle)
     d = distance(A,B)
     if d <= abs(A.R - B.R)
         if A.R < B.R
-            A.Contained = 1
+            A.Contained = true
         else
-            B.Contained = 1
+            B.Contained = true
         end
     end
 end
@@ -73,8 +73,8 @@ function boundary(A::Circle,point::Point)
     y = point.y
     
     if round((x-A.x)^2 + (y-A.y)^2 - A.R^2, digits=8) < 0 #inside circle
-        return 0
-    else return 1
+        return false
+    else return true
     end
 
 end
