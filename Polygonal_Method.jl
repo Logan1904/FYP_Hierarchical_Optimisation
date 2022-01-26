@@ -5,7 +5,7 @@ for i in range(1,stop=N)
     x,y = rand(-10:10,2)
     R = rand(2:5,1)[1]
 
-    push!(circles,Functions.Circle(x,y,R,[],[],0))
+    push!(circles,Functions.Circle(x,y,R,[],[],false))
 end
 
 #get intersection points for all circles
