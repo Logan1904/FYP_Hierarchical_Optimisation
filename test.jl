@@ -20,8 +20,8 @@ end
 
     @test Functions.intersection(A,A) == "coincident"
     @test Functions.intersection(A,B) == (0.5,-0.5*sqrt(3),0.5,+0.5*sqrt(3))
-    @test Functions.intersection(A,C) == nothing
-    @test Functions.intersection(A,D) == nothing
+    @test Functions.intersection(A,C) === nothing
+    @test Functions.intersection(A,D) === nothing
 end
 
 @testset "Contained Function" begin
