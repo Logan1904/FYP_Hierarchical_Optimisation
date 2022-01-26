@@ -10,11 +10,15 @@ end
 
 #get intersection points for all circles
 intersections = []
+to_delete = []
 for i in range(1,stop=length(circles))
     for j in range(i+1,stop=length(circles))
         coords = Functions.intersection(circles[i],circles[j])
 
-        if isnothing(coords) == false
+        if coords == "coincident"
+            push!(to_delete,j)
+            continue
+        elseif isnothing(coords) == false
             x1,y1,x2,y2 = coords
             A = circles[i]
             B = circles[j]
@@ -34,6 +38,7 @@ for i in range(1,stop=length(circles))
 
     end
 end
+deleteat!(circles,to_delete)
 
 # obtain boundary ID -> 1: on outer contour, 0: contained inside contour
 for i in range(1,stop=size(intersections)[1])

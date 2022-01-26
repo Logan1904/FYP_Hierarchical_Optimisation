@@ -33,7 +33,7 @@ function intersection(A::Circle,B::Circle)
         contained(A,B)
         return nothing
     elseif d == 0 && A.R == B.R #coincident circles
-        return nothing
+        return "coincident"
     else
         a = (d^2+A.R^2-B.R^2)/(2*d)
         h = sqrt((A.R^2-a^2))
