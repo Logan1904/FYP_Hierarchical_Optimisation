@@ -214,6 +214,6 @@ function associate(Vector)
     end
 
     return final
+end
 
-end
-end
+end #module end
