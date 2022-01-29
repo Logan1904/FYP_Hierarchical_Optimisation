@@ -2,6 +2,7 @@ module Polygonal_Method
 import Functions
 
 function Area(circles)
+    circles = check_coincident(circles)                     #checks for coincident circles and deletes
     circles,intersections = intersection_points(circles)    #get intersection points for all circles
     intersections = boundary_ID(circles,intersections)      #obtain boundary ID -> 1: on outer contour, 0: contained inside contour
     polygons = form_polygons(circles,intersections)         #form polygons
@@ -25,6 +26,21 @@ function Area(circles)
     println("Total area (Polygonal): ",area)
 end
 
+function check_coincident(circles)
+    to_delete = []
+    for i in range(1,stop=length(circles))
+        for j in range(i+1,stop=length(circles))
+            A = circles[i]
+            B = circles[j]
+
+            val = Functions.coincident(A,B)
+            if val == true
+                push!(to_delete,j)
+            end
+        end
+    end
+    deleteat!(circles,to_delete)
+end
 
 function intersection_points(circles)
     intersections = []
@@ -33,10 +49,7 @@ function intersection_points(circles)
         for j in range(i+1,stop=length(circles))
             coords = Functions.intersection(circles[i],circles[j])
 
-            if coords == "coincident"
-                push!(to_delete,j)
-                continue
-            elseif isnothing(coords) == false
+            if isnothing(coords) == false
                 x1,y1,x2,y2 = coords
                 A = circles[i]
                 B = circles[j]
@@ -56,7 +69,6 @@ function intersection_points(circles)
 
         end
     end
-    deleteat!(circles,to_delete)
 
     return circles, intersections
 end

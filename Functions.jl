@@ -23,6 +23,14 @@ function distance(A::Circle,B::Circle)
     return distance
 end
 
+# Checks if 2 circle objects are coincident or not
+function coincident(A::Circle,B::Circle)
+    d = distance(A,B)
+    if d == 0 && A.R == B.R
+        return true
+    end
+end
+
 # Takes in 2 Circle objects, returns Cartesian intersection coordinates - two Tuple{Float64,Float64}
 function intersection(A::Circle,B::Circle)
     d = distance(A,B)
@@ -33,7 +41,7 @@ function intersection(A::Circle,B::Circle)
         contained(A,B)
         return nothing
     elseif d == 0 && A.R == B.R #coincident circles
-        return "coincident"
+        return nothing
     else
         a = (d^2+A.R^2-B.R^2)/(2*d)
         h = sqrt((A.R^2-a^2))
