@@ -24,6 +24,7 @@ function Area(circles)
     end
 
     println("Total area (Polygonal): ",area)
+    return area
 end
 
 function check_coincident(circles)

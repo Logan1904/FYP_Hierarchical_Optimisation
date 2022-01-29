@@ -25,6 +25,7 @@ function Area(circles,N_MC,domain)
 
     area = count/N_MC * (domain_x*domain_y)
     println("Total Area (MonteCarlo): ",area)
+    return area
 end
 
 end #module end
