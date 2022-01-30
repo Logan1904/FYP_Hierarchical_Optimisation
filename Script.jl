@@ -17,5 +17,5 @@ end
 import Polygonal_Method
 import MonteCarlo_Method
 
-Area_Polygonal = Polygonal_Method.Area(circles)
-Area_MonteCarlo = MonteCarlo_Method.Area(circles,1000,[domain_x,domain_y])
+Area_Polygonal = Polygonal_Method.Area(circles);
+Area_MonteCarlo = MonteCarlo_Method.Area(circles,1000,[domain_x,domain_y]);
