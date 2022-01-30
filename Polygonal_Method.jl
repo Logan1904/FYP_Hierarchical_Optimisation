@@ -1,7 +1,7 @@
 module Polygonal_Method
 import Functions
 
-function Area(circles)
+function Area(circles; print::Bool=false)
     circles = check_coincident(circles)                     #checks for coincident circles and deletes
     circles,intersections = intersection_points(circles)    #get intersection points for all circles
     intersections = boundary_ID(circles,intersections)      #obtain boundary ID -> 1: on outer contour, 0: contained inside contour
@@ -14,16 +14,23 @@ function Area(circles)
     for i in range(1,stop=size(polygons)[1])                #obtain area of polygons
         var = Functions.shoelace(polygons[i])
         area = area + var
-        println("Area of polygon ",i,": ",var)
+        if print
+            println("Area of polygon ",i,": ",var)
+        end
     end
 
     for i in range(1,stop=size(sectors)[1])                 #obtain area of sectors
         var = Functions.area_sector(sectors[i])
         area = area + var
-        println("Area of sector ",i,": ",var)
+        if print
+            println("Area of sector ",i,": ",var)
+        end
     end
 
-    println("Total area (Polygonal): ",area)
+    if print
+        println("Total area (Polygonal): ",area)
+    end
+
     return area
 end
 
