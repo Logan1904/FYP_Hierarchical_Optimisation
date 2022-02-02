@@ -25,7 +25,7 @@ end
 
 # Checks if 2 circle objects are coincident or not
 function coincident(A::Circle,B::Circle)
-    d = distance(A,B)
+    d = round(distance(A,B), digits=1)
     if d == 0 && A.R == B.R
         return true
     end
