@@ -57,10 +57,10 @@ function transform(z)
     return temp
 end
 
-p = DSProblem(N_Dimensions);
+p = DSProblem(N_Dimensions, search=RandomSearch(10), poll=LTMADS());
 SetInitialPoint(p, z);
 SetObjective(p, obj);
-SetIterationLimit(p, 500);
+SetIterationLimit(p, 100);
 
 function cons(x)
     for i in range(1,stop=length(x))
