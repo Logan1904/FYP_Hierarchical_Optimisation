@@ -1,8 +1,23 @@
 module Polygonal_Method
 import Functions
 
-function Area(circles; print::Bool=false)
-    circles = check_coincident(circles)                     #checks for coincident circles and deletes
+function make_circles(arr)
+    n = Int(length(arr)/3)
+    x = arr[1:n]
+    y = arr[n+1:2*n]
+    R = arr[2*n+1:3*n]
+
+    circles = []
+    for i in 1:n
+        push!(circles,Functions.Circle(x[i],y[i],R[i],[],[],false))
+    end
+    
+    return circles
+end
+
+function Area(arr; print::Bool=false)
+    circles = make_circles(arr)
+    check_coincident(circles)                               #check if any circles are coincident
     circles,intersections = intersection_points(circles)    #get intersection points for all circles
     intersections = boundary_ID(circles,intersections)      #obtain boundary ID -> 1: on outer contour, 0: contained inside contour
     polygons = form_polygons(circles,intersections)         #form polygons
@@ -35,19 +50,28 @@ function Area(circles; print::Bool=false)
 end
 
 function check_coincident(circles)
-    to_delete = []
-    for i in range(1,stop=length(circles))
-        for j in range(i+1,stop=length(circles))
-            A = circles[i]
-            B = circles[j]
+    clean = false
+    while clean == false
+        clean = true
+        superbreak = false
+        for i in range(1,stop=length(circles))
+            for j in range(i+1,stop=length(circles))
+                A = circles[i]
+                B = circles[j]
 
-            val = Functions.coincident(A,B)
-            if val == true
-                push!(to_delete,j)
+                val = Functions.coincident(A,B)
+                if val == true
+                    deleteat!(circles,j)
+                    superbreak = true
+                    clean = false
+                    break
+                end
+            end
+            if superbreak
+                break
             end
         end
     end
-    deleteat!(circles,to_delete)
 end
 
 function intersection_points(circles)
