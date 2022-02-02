@@ -1,66 +1,45 @@
 using DirectSearch
 import Polygonal_Method
-import Functions
 
+# parameters
 N_circles = 5
 domain_x = 20
 domain_y = 20
 radius_limit = 5
-Radius = [1,2,3,4,5]
 
-circles = []
-z = Vector{Float64}(undef, 0)
+#generate circles
+x_arr = Vector{Float64}(undef,0)
+y_arr = Vector{Float64}(undef,0)
+R_arr = Vector{Float64}(undef,0)
+
 for i in range(1,stop=N_circles)
     x = rand(radius_limit:domain_x-radius_limit)[1]
     y = rand(radius_limit:domain_y-radius_limit)[1]
-    R = Radius[i]
+    R = rand(2:2)[1]
 
-    push!(circles,Functions.Circle(x,y,R,[],[],false))
-    push!(z,x,y)
+    push!(x_arr,x)
+    push!(y_arr,y)
+    push!(R_arr,R)
 end
+
+arr = [x_arr;y_arr;R_arr]
+circles = Polygonal_Method.make_circles(arr)
+
+z = [x_arr;y_arr]
 
 N_Dimensions = N_circles*2
 
-# Initial transformation from circles to z and radius
+# Objective function
 function obj(z)
-    temp = []
-    for i in range(1,stop=size(z)[1],step=2)
-        x = z[i]
-        y = z[i+1]
-
-        push!(temp,Functions.Circle(x,y,1,[],[],false))
-    end
-
-    for i in range(1,stop=length(circles))
-        temp[i].R = Radius[i]
-    end
-
-    Area = -Polygonal_Method.Area(temp)
-
+    obj_arr = [z;R_arr]
+    Area = -1 * Polygonal_Method.Area(obj_arr)
     return Area
-end
-
-#transform from z back to circle vector
-function transform(z)
-    temp = []
-    for i in range(1,stop=length(z),step=2)
-        x = z[i]
-        y = z[i+1]
-
-        push!(temp,Functions.Circle(x,y,1,[],[],false))
-    end
-
-    for i in range(1,stop=length(circles))
-        temp[i].R = Radius[i]
-    end
-
-    return temp
 end
 
 p = DSProblem(N_Dimensions, search=RandomSearch(10), poll=LTMADS());
 SetInitialPoint(p, z);
 SetObjective(p, obj);
-SetIterationLimit(p, 100);
+SetIterationLimit(p, 50);
 
 function cons(x)
     for i in range(1,stop=length(x))
@@ -77,9 +56,9 @@ AddExtremeConstraint(p, cons);
 
 Optimize!(p)
 
-println("First iteration: ",Polygonal_Method.Area(circles,print=false))
-println("After optimization: ", Polygonal_Method.Area(transform(p.x),print=false))
+println("First iteration: ",Polygonal_Method.Area(arr,print=false))
+println("After optimization: ", Polygonal_Method.Area([p.x;R_arr],print=false))
 
 import Plotter
 Plotter.plot_domain(circles,[domain_x,domain_y],"First_Iteration")
-Plotter.plot_domain(transform(p.x),[domain_x,domain_y],"Last_Iteration")
+Plotter.plot_domain(Polygonal_Method.make_circles([p.x;R_arr]),[domain_x,domain_y],"Last_Iteration")
