@@ -2,10 +2,10 @@ using DirectSearch
 import Polygonal_Method
 
 # parameters
-N_circles = 5
-domain_x = 20
-domain_y = 20
-radius_limit = 5
+N_circles = 10
+domain_x = 100
+domain_y = 100
+radius_limit = 20
 
 #generate circles
 x_arr = Vector{Float64}(undef,0)
@@ -15,7 +15,7 @@ R_arr = Vector{Float64}(undef,0)
 for i in range(1,stop=N_circles)
     x = rand(radius_limit:domain_x-radius_limit)[1]
     y = rand(radius_limit:domain_y-radius_limit)[1]
-    R = rand(2:2)[1]
+    R = rand(1:radius_limit)[1]
 
     push!(x_arr,x)
     push!(y_arr,y)
@@ -39,11 +39,11 @@ end
 p = DSProblem(N_Dimensions, search=RandomSearch(10), poll=LTMADS());
 SetInitialPoint(p, z);
 SetObjective(p, obj);
-SetIterationLimit(p, 50);
+SetIterationLimit(p, 100); #number of iterations depends on problem size to converge
 
 function cons(x)
     for i in range(1,stop=length(x))
-        val = x[i] <= 15 && x[i] >= 5;
+        val = x[i] <= domain_x-radius_limit && x[i] >= radius_limit; #change constraint so independant of x and y
         if !val
             return false
         end
