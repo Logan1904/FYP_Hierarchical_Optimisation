@@ -15,7 +15,7 @@ function make_circles(arr)
     return circles
 end
 
-function Area(arr; print::Bool=false)
+function Area(arr; print::Bool=false, return_objects::Bool=false)
     circles = make_circles(arr)
     check_coincident(circles)                               #check if any circles are coincident
     circles,intersections = intersection_points(circles)    #get intersection points for all circles
@@ -46,7 +46,12 @@ function Area(arr; print::Bool=false)
         println("Total area (Polygonal): ",area)
     end
 
+    if return_objects
+        return area, circles
+    end
+
     return area
+
 end
 
 function check_coincident(circles)
