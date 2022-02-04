@@ -1,6 +1,7 @@
 using Test
 using Random
 using LinearAlgebra
+import Functions
 
 @testset "Euclidean Distance Function" begin
     x1,y1,x2,y2 = rand(-1000:1000,4)
@@ -18,7 +19,7 @@ end
     C = Functions.Circle(2,0,1,[],[],false)
     D = Functions.Circle(3,0,1,[],[],false)
 
-    @test Functions.intersection(A,A) == "coincident"
+    @test Functions.intersection(A,A) === nothing
     @test Functions.intersection(A,B) == (0.5,-0.5*sqrt(3),0.5,+0.5*sqrt(3))
     @test Functions.intersection(A,C) === nothing
     @test Functions.intersection(A,D) === nothing
@@ -29,6 +30,7 @@ end
     B = Functions.Circle(0,0,0.5,[],[],false)
     C = Functions.Circle(1,0,1,[],[],false)
     D = Functions.Circle(2,0,1,[],[],false)
+    E = Functions.Circle(0.5,0,0.5,[],[],false)
 
     #@test Functions.contained(A,A) == nothing
 
@@ -43,6 +45,10 @@ end
     Functions.contained(A,D)
     @test A.Contained == false
     @test D.Contained == false
+
+    Functions.contained(A,E)
+    @test A.Contained == false
+    @test E.Contained == true
 end
 
 @testset "Boundary Function" begin
