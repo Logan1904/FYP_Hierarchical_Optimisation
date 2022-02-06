@@ -1,20 +1,6 @@
 module Polygonal_Method
 import Functions
 
-function make_circles(arr)
-    n = Int(length(arr)/3)
-    x = arr[1:n]
-    y = arr[n+1:2*n]
-    R = arr[2*n+1:3*n]
-
-    circles = []
-    for i in 1:n
-        push!(circles,Functions.Circle(x[i],y[i],R[i],[],[],false))
-    end
-    
-    return circles
-end
-
 function Area(arr; print::Bool=false, return_objects::Bool=false)
     circles = make_circles(arr)
     check_coincident(circles)                               #check if any circles are coincident
@@ -47,11 +33,25 @@ function Area(arr; print::Bool=false, return_objects::Bool=false)
     end
 
     if return_objects
-        return area, circles
+        return area, circles, intersections, polygons, sectors
     end
 
     return area
 
+end
+
+function make_circles(arr)
+    n = Int(length(arr)/3)
+    x = arr[1:n]
+    y = arr[n+1:2*n]
+    R = arr[2*n+1:3*n]
+
+    circles = []
+    for i in 1:n
+        push!(circles,Functions.Circle(x[i],y[i],R[i],[],[],false))
+    end
+    
+    return circles
 end
 
 function check_coincident(circles)
@@ -136,6 +136,9 @@ function form_polygons(circles,intersections)
     polygon = []
     big_polygon = []
     for i in range(1,stop=length(circles))
+        if circles[i].Contained == true
+            continue
+        end
         for j in range(i+1,stop=length(circles))
             shared_points_index = intersect(circles[i].Points, circles[j].Points)
 
@@ -165,7 +168,7 @@ function form_polygons(circles,intersections)
     # form big polygon points
     if size(big_polygon)[1] != 0
 
-        big_polygon = Functions.associate(big_polygon)
+        big_polygon = Functions.associate2(big_polygon)
 
         #unpack and form unique points of big polygon
         for i in range(1,stop=size(big_polygon)[1])
