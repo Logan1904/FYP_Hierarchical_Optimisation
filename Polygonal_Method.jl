@@ -2,7 +2,7 @@ module Polygonal_Method
 import Functions
 
 function Area(arr; print::Bool=false, return_objects::Bool=false)
-    circles = make_circles(arr)
+    circles = Functions.make_circles(arr)
     check_coincident(circles)                               #check if any circles are coincident
     circles,intersections = intersection_points(circles)    #get intersection points for all circles
     intersections = boundary_ID(circles,intersections)      #obtain boundary ID -> 1: on outer contour, 0: contained inside contour
@@ -38,20 +38,6 @@ function Area(arr; print::Bool=false, return_objects::Bool=false)
 
     return area
 
-end
-
-function make_circles(arr)
-    n = Int(length(arr)/3)
-    x = arr[1:n]
-    y = arr[n+1:2*n]
-    R = arr[2*n+1:3*n]
-
-    circles = []
-    for i in 1:n
-        push!(circles,Functions.Circle(x[i],y[i],R[i],[],[],false))
-    end
-    
-    return circles
 end
 
 function check_coincident(circles)
@@ -127,10 +113,10 @@ function form_polygons(circles,intersections)
     polygon = []
     big_polygon = []
     for i in range(1,stop=length(circles))
-        if circles[i].Contained == true
-            continue
-        end
         for j in range(i+1,stop=length(circles))
+            if circles[i].Contained == 1 || circles[j].Contained == 1
+                continue
+            end
             shared_points_index = intersect(circles[i].Points, circles[j].Points)
 
             storage = []
