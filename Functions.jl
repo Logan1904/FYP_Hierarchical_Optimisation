@@ -267,60 +267,65 @@ end
 function associate2(vector)
     myvect = copy(vector)
     dummy = []
+    visited = []
+    last_circle = []
+    final = []
 
     push!(dummy, myvect[1])
     splice!(myvect, 1)
 
-    visited = []
-    last_circle = []
-    final = []
-        while size(myvect)[1] > 0
-        end_of_iterations = true
+    while size(myvect)[1] > 0   # we iterate through myvect until all points have been assigned to a polygon
+        end_of_iterations = true    # marker to signal that all points for a particular polygon have been put into dummy
         for i in range(1,stop=size(myvect)[1])
             var1 = last(dummy)
             var2 = myvect[i]
 
-            common = intersect(var1[1], var2[1])
+            common = intersect(var1[1], var2[1]) # the common circle between 2 points
 
+            # a common circle exists that hasn't been previously visited
             if size(common)[1] > 0 && (common[1] in visited) == false
-                if length(dummy) == 1
-                    push!(last_circle, var1[1][findall(x -> x != common[1], var1[1])[1]])
+                if length(dummy) == 1 # second polygon point found, we now know what the associated circle for the last point is
+                    last_circle_index = findall(x -> x != common[1], var1[1])
+                    push!(last_circle, var1[1][last_circle_index][1])
                 end
-                push!(dummy,var2)
-                splice!(myvect,i)
-                push!(visited, common[1])
+                push!(dummy,var2) # push this point to dummy
+                splice!(myvect,i) # remove this point from myvect
+                push!(visited, common[1]) # add the common circle to vector of visited circles
                 end_of_iterations = false
                 break
             end
-
         end
 
+        # check if the last point in dummy shares the same circle as what we know the last point should
         supposed_last = last(dummy)[1][findall(x -> x != last(visited), last(dummy)[1])[1]]
-        if supposed_last == last_circle[1] # polygon created
+        if supposed_last == last_circle[1] # if last point circle matches, polygon is formed
             push!(final, dummy)
             vector = myvect;
+
             if size(myvect)[1] == 0
                 break
             end
+
             dummy = []
-            push!(dummy, myvect[1])
-            splice!(myvect, 1)
             visited = []
             last_circle = []
+
+            push!(dummy, myvect[1])
+            splice!(myvect, 1)
         elseif end_of_iterations
             vector = shuffle(vector)
             myvect = copy(vector)
+
             dummy = []
-            push!(dummy, myvect[1])
-            splice!(myvect, 1)
             visited = []
             last_circle = []
-        end
 
+            push!(dummy, myvect[1])
+            splice!(myvect, 1)
+        end
     end
 
     return final
-
 end
 
 end #module end
