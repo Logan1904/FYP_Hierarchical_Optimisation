@@ -17,7 +17,7 @@ R_arr = Vector{Float64}(undef,0)
 for i in range(1,stop=N_circles)
     x = rand(R_lim:domain_x-R_lim)[1]
     y = rand(R_lim:domain_y-R_lim)[1]
-    R = rand(5:10)[1]
+    R = rand(1:R_lim)[1]
 
     push!(x_arr,x)
     push!(y_arr,y)
@@ -100,7 +100,7 @@ function cons4(x)
 end
 
 function cons5(x)
-    return sum(x[2*N_circles+1 : N_Dimensions]) - 75
+    return sum(x[2*N_circles+1 : N_Dimensions]) - 50
 end
 
 # add constraints to problem
