@@ -1,7 +1,7 @@
 module MonteCarlo_Method
 import Functions
 
-function Area(arr,N_MC,domain)
+function Area(arr,N_MC,domain; print::Bool=false)
     circles = Functions.make_circles(arr)
     N_MC = 100000
     count = 0
@@ -25,7 +25,9 @@ function Area(arr,N_MC,domain)
     end
 
     area = count/N_MC * (domain_x*domain_y)
-    println("Total Area (MonteCarlo): ",area)
+    if print
+        println("Total Area (MonteCarlo): ",area)
+    end
     return area
 end
 
