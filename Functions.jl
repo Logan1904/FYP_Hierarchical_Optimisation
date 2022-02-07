@@ -18,6 +18,21 @@ mutable struct Point
     ID::Bool # 1 if point is on contour, 0 if point contained within a circle, 
 end
 
+# form a vector of Circle objects from input vector 
+function make_circles(arr)
+    n = Int(length(arr)/3)
+    x = arr[1:n]
+    y = arr[n+1:2*n]
+    R = arr[2*n+1:3*n]
+
+    circles = []
+    for i in 1:n
+        push!(circles,Functions.Circle(x[i],y[i],R[i],[],[],false))
+    end
+    
+    return circles
+end
+
 # Euclidean distance between centres of 2 Circle objects
 function distance(A::Circle,B::Circle)
     distance = sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
@@ -25,7 +40,7 @@ function distance(A::Circle,B::Circle)
 end
 
 # Checks if 2 circle objects are coincident or not
-function coincident(A::Circle,B::Circle)
+function coincident(A,B)
     d = round(distance(A,B), digits=1)
     if d == 0 && A.R == B.R
         return true
