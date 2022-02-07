@@ -1,7 +1,8 @@
 module MonteCarlo_Method
 import Functions
 
-function Area(circles,N_MC,domain)
+function Area(arr,N_MC,domain)
+    circles = Functions.make_circles(arr)
     N_MC = 100000
     count = 0
     domain_x,domain_y = domain
