@@ -117,20 +117,22 @@ function form_polygons(circles,intersections)
             A = circles[i]
             B = circles[j]
 
-            if A.Contained == 1 || B.Contained == 1 # if either circle is completely within another circle, ignore
+            # if either circle is completely within another circle, ignore
+            if A.Contained == 1 || B.Contained == 1
                 continue
             end
 
-            shared_points_index = intersect(A.Points, B.Points) # obtain indices of shared points between 2 circles
+            # obtain indices of shared points between 2 circles
+            shared_points_index = intersect(A.Points, B.Points)
             
             # now obtain shared points between 2 circles only if the point is on contour boundary
             shared_points = [intersections[k] for k in shared_points_index if intersections[k].ID == 1]
 
-            if length(shared_points) == 0 # no shared contour points
+            if length(shared_points) == 0       # no shared contour points
                 continue
-            elseif length(shared_points) == 2 # 2 shared contour points -> a 4 sided polygon
+            elseif length(shared_points) == 2   # 2 shared contour points -> a 4 sided polygon
                 push!(polygon, [A, B, shared_points[1], shared_points[2]])
-            elseif length(shared_points) == 1 # 1 shared contour point -> part of a bigger >4 sided polygon
+            elseif length(shared_points) == 1   # 1 shared contour point -> part of a bigger >4 sided polygon
                 push!(big_polygon, [[A, B], shared_points[1]])
             end
             
