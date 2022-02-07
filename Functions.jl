@@ -29,6 +29,8 @@ function coincident(A::Circle,B::Circle)
     d = round(distance(A,B), digits=1)
     if d == 0 && A.R == B.R
         return true
+    else
+        return false
     end
 end
 
