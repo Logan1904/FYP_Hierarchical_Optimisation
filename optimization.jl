@@ -1,9 +1,10 @@
 using DirectSearch
 import Polygonal_Method
+import Plotter
 
 # parameters
 N_circles = 10
-N_Dimensions = N_circles*2
+N_Dimensions = N_circles*3
 domain_x = 50
 domain_y = 50
 R_lim = 10
@@ -16,35 +17,36 @@ R_arr = Vector{Float64}(undef,0)
 for i in range(1,stop=N_circles)
     x = rand(R_lim:domain_x-R_lim)[1]
     y = rand(R_lim:domain_y-R_lim)[1]
-    R = rand(1:R_lim)[1]
+    R = rand(5:10)[1]
 
     push!(x_arr,x)
     push!(y_arr,y)
     push!(R_arr,R)
 end
 
-arr = [x_arr;y_arr;R_arr]
-z = [x_arr;y_arr]
+z = [x_arr;y_arr;R_arr]
 
-initial_circles = Polygonal_Method.make_circles(arr)
+initial_circles = Polygonal_Method.make_circles(z)
 
 # define optimization problem
-p = DSProblem(N_Dimensions, search=RandomSearch(10), poll=LTMADS())
+p = DSProblem(N_Dimensions)
 SetInitialPoint(p, z)
 
 # set objective function
 function obj(z)
-    obj_arr = [z;R_arr]
-    Area = -1 * Polygonal_Method.Area(obj_arr)
-    return Area
+    Area = Polygonal_Method.Area(z)
+    return -Area
 end
 
 SetObjective(p, obj)
 SetIterationLimit(p, 100) #number of iterations for convergence depends on problem size
 
-function cons(x)
-    for i in range(1,stop=length(x))
-        val = x[i] <= domain_x-R_lim && x[i] >= R_lim #change constraint so independant of x and y
+# x domain constraint
+function cons1(x)
+    for i in range(1,stop=Int(length(x)/3))
+        x_val = x[i]
+        R_val = x[N_circles*2 + i]
+        val = x_val <= domain_x-R_val && x_val >= R_val #change constraint so independant of x and y
         if !val
             return false
         end
@@ -53,11 +55,60 @@ function cons(x)
     return true
 end
 
-AddExtremeConstraint(p, cons)
+# y domain constraint
+function cons2(x)
+    for i in range(1,stop=Int(length(x)/3))
+        y_val = x[N_circles + i]
+        R_val = x[N_circles*2 + i]
+        val = y_val <= domain_y-R_val && y_val >= R_val #change constraint so independant of x and y
+        if !val
+            return false
+        end
+    end
+
+    return true
+end
+
+# R domain constraint
+function cons3(x)
+    for i in range(1,stop=Int(length(x)/3))
+        R_val = x[N_circles*2 + i]
+        val = R_val >= 5 && R_val <= R_lim
+        if !val
+            return false
+        end
+    end
+
+    return true
+end
+
+function cons4(x)
+    for i in range(1,stop=Int(length(x)/3))
+        R_val = x[N_circles*2 + i]
+        val = R_val == z[N_circles*2 + i]
+        if !val
+            return false
+        end
+    end
+
+    return true
+end
+
+function cons5(x)
+    return sum(x[2*N_circles+1 : N_Dimensions]) - 75
+end
+
+# add constraints to problem
+AddExtremeConstraint(p, cons1)
+AddExtremeConstraint(p, cons2)
+AddExtremeConstraint(p, cons3)
+#AddExtremeConstraint(p, cons4)
+AddProgressiveConstraint(p, cons5)
+
 Optimize!(p)
 
 # check if any circle completely contained by another circle, ie stuck in local minima
-_,final_circles = Polygonal_Method.Area([p.x;R_arr], return_objects=true)
+_,final_circles = Polygonal_Method.Area(p.x, return_objects=true)
 global contained = [final_circles[i].Contained for i in 1:length(final_circles)]
 
 while any(contained)
@@ -71,17 +122,18 @@ while any(contained)
         p.x[N_circles + i] = y
     end
 
-    global _,final_circles = Polygonal_Method.Area([p.x;R_arr], return_objects=true)
+    global _,final_circles = Polygonal_Method.Area(p.x, return_objects=true)
     global contained = [final_circles[i].Contained for i in 1:length(final_circles)]
 
-    BumpIterationLimit(p)
-    Optimize!(p)
-
+    if any(contained) == false
+        BumpIterationLimit(p)
+        Optimize!(p)
+    end
 end
 
-println("First iteration: ",Polygonal_Method.Area(arr))
-println("After optimization: ", Polygonal_Method.Area([p.x;R_arr]))
+# print areas and plot images
+println("First iteration: ",Polygonal_Method.Area(z))
+println("After optimization: ", Polygonal_Method.Area(p.x))
 
-import Plotter
 Plotter.plot_domain(initial_circles,[domain_x,domain_y],"First_Iteration")
-Plotter.plot_domain(Polygonal_Method.make_circles([p.x;R_arr]),[domain_x,domain_y],"Last_Iteration")
+Plotter.plot_domain(Polygonal_Method.make_circles(p.x),[domain_x,domain_y],"Last_Iteration")
