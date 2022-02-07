@@ -81,7 +81,6 @@ end
 
 function intersection_points(circles)
     intersections = []
-    to_delete = []
     for i in range(1,stop=length(circles))
         for j in range(i+1,stop=length(circles))
             coords = Functions.intersection(circles[i],circles[j])
