@@ -58,21 +58,13 @@ function check_coincident(circles)
     clean = false
     while clean == false
         clean = true
-        superbreak = false
-        for i in range(1,stop=length(circles))
-            for j in range(i+1,stop=length(circles))
-                A = circles[i]
-                B = circles[j]
+        for i in range(1,stop=length(circles)), j in range(i+1,stop=length(circles))
+            A = circles[i]
+            B = circles[j]
 
-                val = Functions.coincident(A,B)
-                if val == true
-                    deleteat!(circles,j)
-                    superbreak = true
-                    clean = false
-                    break
-                end
-            end
-            if superbreak
+            if Functions.coincident(A,B)
+                clean = false
+                deleteat!(circles,j)
                 break
             end
         end
