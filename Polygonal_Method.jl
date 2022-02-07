@@ -114,29 +114,24 @@ function form_polygons(circles,intersections)
     big_polygon = []
     for i in range(1,stop=length(circles))
         for j in range(i+1,stop=length(circles))
-            if circles[i].Contained == 1 || circles[j].Contained == 1
+            A = circles[i]
+            B = circles[j]
+
+            if A.Contained == 1 || B.Contained == 1 # if either circle is completely within another circle, ignore
                 continue
             end
-            shared_points_index = intersect(circles[i].Points, circles[j].Points)
 
-            storage = []
-            for k in range(1,stop=size(shared_points_index)[1])
-                point = intersections[shared_points_index[k]]
+            shared_points_index = intersect(A.Points, B.Points) # obtain indices of shared points between 2 circles
+            
+            # now obtain shared points between 2 circles only if the point is on contour boundary
+            shared_points = [intersections[k] for k in shared_points_index if intersections[k].ID == 1]
 
-                if point.ID == 0
-                    push!(storage,k) # store index of shared point (only non-contour point) between 2 circles
-                end
-
-            end
-
-            splice!(shared_points_index,storage) # obtain index of shared points that are contour points
-
-            if size(shared_points_index)[1] == 0 # no shared contour points
+            if length(shared_points) == 0 # no shared contour points
                 continue
-            elseif size(shared_points_index)[1] == 2 # 2 shared contour points -> a 4 sided polygon
-                push!(polygon,[circles[i],circles[j],intersections[shared_points_index[1]],intersections[shared_points_index[2]]])
-            elseif size(shared_points_index)[1] == 1 # 1 shared contour point -> part of a bigger >4 sided polygon
-                push!(big_polygon,[[circles[i],circles[j]],intersections[shared_points_index[1]]])
+            elseif length(shared_points) == 2 # 2 shared contour points -> a 4 sided polygon
+                push!(polygon, [A, B, shared_points[1], shared_points[2]])
+            elseif length(shared_points) == 1 # 1 shared contour point -> part of a bigger >4 sided polygon
+                push!(big_polygon, [[A, B], shared_points[1]])
             end
             
         end
