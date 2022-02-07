@@ -1,5 +1,6 @@
 module Functions
 using LinearAlgebra
+using Random
 
 mutable struct Circle
     x::Float64 
@@ -222,6 +223,88 @@ function associate(Vector)
     end
 
     return final
+end
+
+# Function for forming >4 sided polygons. "vector" is a Vector of all the points, and their associated
+# circles, that form one or more >4 sided polygons.
+#
+# Each row in "vector" is of the form [[circle1,circle2], [point]], where circle1 and circle2 are the circles that intersect
+# to form point.
+#
+# In the 'associate' function above, we start at the first point (first row of 'vector') and iterate through 'vector', looking for 
+# another point that shares an associated circle with the first point. Once found, we repeat this process again, looking for an 
+# associated circle with the second point, and so on.
+#
+# The key problem with this is that if we have 2 >4 sided polygons that share a common circle, the function groups them together as 
+# one big >4 sided polygon. This will produce errors.
+# 
+# Our 'associate2' function works around this problem by taking advantage of the fact that for any single polygon, a circle
+# can only be used to link 2 points, and only 2 points, together.
+#
+# Hence, we can iterate through 'vector' as before. While iterating, we store the circles that have already been visited. So we 
+# only look for points that are associated with a circle not already visited. We also know that the last point in a polygon has 
+# to be associated with one of the circles associated with the first point. In particular, this circle is the circle that was not 
+# used to find the second point in the polygon.
+# 
+# Once we cannot find any more associated points, we check if the last point is associated with the first point through the circle 
+# that was not used to find the second point from the first point. If the circles do not match, we shuffle our vector and try again.
+function associate2(vector)
+    myvect = copy(vector)
+    dummy = []
+
+    push!(dummy, myvect[1])
+    splice!(myvect, 1)
+
+    visited = []
+    last_circle = []
+    final = []
+        while size(myvect)[1] > 0
+        end_of_iterations = true
+        for i in range(1,stop=size(myvect)[1])
+            var1 = last(dummy)
+            var2 = myvect[i]
+
+            common = intersect(var1[1], var2[1])
+
+            if size(common)[1] > 0 && (common[1] in visited) == false
+                if length(dummy) == 1
+                    push!(last_circle, var1[1][findall(x -> x != common[1], var1[1])[1]])
+                end
+                push!(dummy,var2)
+                splice!(myvect,i)
+                push!(visited, common[1])
+                end_of_iterations = false
+                break
+            end
+
+        end
+
+        supposed_last = last(dummy)[1][findall(x -> x != last(visited), last(dummy)[1])[1]]
+        if supposed_last == last_circle[1] # polygon created
+            push!(final, dummy)
+            vector = myvect;
+            if size(myvect)[1] == 0
+                break
+            end
+            dummy = []
+            push!(dummy, myvect[1])
+            splice!(myvect, 1)
+            visited = []
+            last_circle = []
+        elseif end_of_iterations
+            vector = shuffle(vector)
+            myvect = copy(vector)
+            dummy = []
+            push!(dummy, myvect[1])
+            splice!(myvect, 1)
+            visited = []
+            last_circle = []
+        end
+
+    end
+
+    return final
+
 end
 
 end #module end
