@@ -16,7 +16,7 @@ y_arr = Vector{Float64}(undef,0)
 R_arr = Vector{Float64}(undef,0)
 
 for i in range(1,stop=N_circles)
-    x = rand(R_lim:domain_x-R_lim)[1]
+    x = rand(31:40)[1]
     y = rand(R_lim:domain_y-R_lim)[1]
     R = rand(1:R_lim)[1]
 
@@ -125,7 +125,7 @@ AddExtremeConstraint(p, cons2)          # domain constraint on y
 #AddExtremeConstraint(p, cons3)         # radius constraint (R between 1 and R_lim)
 AddExtremeConstraint(p, cons4)          # radius constraint (R cannot change)
 #AddProgressiveConstraint(p, cons5)     # radius constraint (Sum of radii < someval)
-#AddExtremeConstraint(p, cons6)      # radius constraint based on x,y location
+AddExtremeConstraint(p, cons6)      # radius constraint based on x,y location
 
 Optimize!(p)
 
@@ -133,8 +133,14 @@ Optimize!(p)
 # 1) Any circles completely contained by another circle
 # 2) Any circles have ONLY non-contour intersection points
 
+if p.x === nothing
+    output = p.i
+else
+    output = p.x
+end
+
 while true
-    _, circles, intersections = Polygonal_Method.Area(p.x, return_objects=true)
+    _, circles, intersections = Polygonal_Method.Area(output, return_objects=true)
 
     contained = [i.Contained for i in circles]
 
@@ -171,13 +177,12 @@ while true
         x = rand(R_lim:domain_x-R_lim)[1]
         y = rand(R_lim:domain_y-R_lim)[1]
 
-        p.x[i] = x
-        p.x[N_circles + i] = y
+        output[i] = x
+        output[N_circles + i] = y
     end
 
-    last_iter = p.x
     global p = DSProblem(N_Dimensions)
-    SetInitialPoint(p, last_iter)
+    SetInitialPoint(p, output)
     SetObjective(p, obj)
     SetIterationLimit(p, 100)
 
@@ -185,15 +190,22 @@ while true
     AddExtremeConstraint(p, cons2)
     #AddExtremeConstraint(p, cons3)
     AddExtremeConstraint(p, cons4)
-    #AddExtremeConstraint(p, cons6)
+    #AddProgressiveConstraint(p, cons5)
+    AddExtremeConstraint(p, cons6)
 
-    Optimize!(p)
+    Optimize!(p);
+
+    if p.x === nothing
+        global output = p.i
+    else
+        global output = p.x
+    end
 
 end
 
 # print areas and plot images
 println("First iteration: ",Polygonal_Method.Area(z))
-println("After optimization: ", Polygonal_Method.Area(p.x))
+println("After optimization: ", Polygonal_Method.Area(output))
 
 Plotter.plot_domain(initial_circles,[domain_x,domain_y],"First_Iteration")
-Plotter.plot_domain(Functions.make_circles(p.x),[domain_x,domain_y],"Last_Iteration")
+Plotter.plot_domain(Functions.make_circles(output),[domain_x,domain_y],"Last_Iteration")
