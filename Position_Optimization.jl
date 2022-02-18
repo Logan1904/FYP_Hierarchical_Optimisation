@@ -16,7 +16,7 @@ y_arr = Vector{Float64}(undef,0)
 R_arr = Vector{Float64}(undef,0)
 
 for i in range(1,stop=N_circles)
-    x = rand(31:40)[1]
+    x = rand(R_lim:domain_x-R_lim)[1]
     y = rand(R_lim:domain_y-R_lim)[1]
     R = rand(1:R_lim)[1]
 
@@ -35,12 +35,7 @@ SetInitialPoint(p, z)
 
 # set objective function
 function obj(z)
-    try
-        global Area = Polygonal_Method.Area(z)
-    catch e
-        println("Error when evaluating area")
-        global Area = 0.0
-    end
+    Area = Polygonal_Method.Area(z)
     return -Area
 end
 
@@ -125,19 +120,19 @@ AddExtremeConstraint(p, cons2)          # domain constraint on y
 #AddExtremeConstraint(p, cons3)         # radius constraint (R between 1 and R_lim)
 AddExtremeConstraint(p, cons4)          # radius constraint (R cannot change)
 #AddProgressiveConstraint(p, cons5)     # radius constraint (Sum of radii < someval)
-AddExtremeConstraint(p, cons6)      # radius constraint based on x,y location
+#AddExtremeConstraint(p, cons6)      # radius constraint based on x,y location
 
 Optimize!(p)
-
-# check if
-# 1) Any circles completely contained by another circle
-# 2) Any circles have ONLY non-contour intersection points
 
 if p.x === nothing
     output = p.i
 else
     output = p.x
 end
+
+# check if
+# 1) Any circles completely contained by another circle
+# 2) Any circles have ONLY non-contour intersection points
 
 while true
     _, circles, intersections = Polygonal_Method.Area(output, return_objects=true)
@@ -191,7 +186,7 @@ while true
     #AddExtremeConstraint(p, cons3)
     AddExtremeConstraint(p, cons4)
     #AddProgressiveConstraint(p, cons5)
-    AddExtremeConstraint(p, cons6)
+    #AddExtremeConstraint(p, cons6)
 
     Optimize!(p);
 
