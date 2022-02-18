@@ -3,7 +3,6 @@ import Functions
 
 function Area(arr,N_MC,domain; print::Bool=false)
     circles = Functions.make_circles(arr)
-    N_MC = 100000
     count = 0
     domain_x,domain_y = domain
     for i in range(1,stop=N_MC)
