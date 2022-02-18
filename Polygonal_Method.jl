@@ -1,5 +1,6 @@
 module Polygonal_Method
 import Functions
+using Graphs
 
 function Area(arr; print::Bool=false, return_objects::Bool=false)
     circles = Functions.make_circles(arr)
@@ -107,6 +108,80 @@ function boundary_ID(circles,intersections)
     end
 
     return intersections
+end
+
+function form_polygons_graph(circles, intersections)
+    # for each point in intersections, get points only on outer contour
+    contour_points = [point for point in intersections if point.ID == 1]
+
+    # check if there are >1 contour points at the same x,y coordinate
+    # if so, combine them together into one point
+    dirty = true
+    while dirty
+        dirty = false
+        super_break = false
+        for i in 1:length(contour_points)
+            for j in i+1:length(contour_points)
+                point1 = contour_points[i]
+                point2 = contour_points[j]
+
+                if point1.x == point2.x && point1.y == point2.y
+                    deleteat!(contour_points, [i,j]) # delete old points with same x,y coords formed from different circles
+                    new_circles = unique(vcat(point1.Circles, point2.Circles)) # get the circles that intersect on the point, no repeated circles
+                    new_point = Functions.Point(point1.x, point1.y, new_circles, 1)
+                    push!(contour_points, new_point) # add this new point to our vector of contour points
+                    dirty = true
+                    super_break = true
+                    break
+                end
+            end
+
+            if super_break
+                break
+            end
+
+        end
+    end
+
+    # make a simple undirected graph using Graphs.jl
+    # nodes are contour points + every circle that make up those contour points
+    # (remember that a point is made up of 2 or more circles that intersect at that point)
+    # edges are connections between a point and the circles that make up that point
+
+    # get a vector of all the circles that make up the contour points, removing repeated circles
+    tmp = [point.Circles for point in contour_points]
+    unique_circles = []
+    for i in 1:length(tmp)
+        for j in 1:length(tmp[i])
+            push!(unique_circles, tmp[i][j])
+        end
+    end
+
+    unique!(unique_circles)
+
+    # our vector of nodes
+    nodes = vcat(contour_points, circles[unique_circles])
+
+    g =SimpleGraph(length(nodes))
+
+    for i in 1:length(contour_points)
+        point_circle_index = contour_points[i].Circles # the circles that make up this contour point
+        for j in 1:length(unique_circles)
+            circle_index = unique_circles[j]
+
+            if circle_index in point_circle_index
+                add_edge!(g, i, j+length(contour_points)) # form edge
+            end
+        end
+    end
+    
+    # get the minimal collection of cycles
+    # a cycle is essentially a polygon
+    cycles = cycle_basis(g)
+
+    polygons = [nodes[i] for i in cycles] #put the corresponding point and circle objects into polygons vector
+
+    return polygons
 end
 
 function form_polygons(circles,intersections)
