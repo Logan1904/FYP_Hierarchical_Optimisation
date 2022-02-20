@@ -173,6 +173,8 @@ function shoelace(Points)
     return area
 end
 
+# get area of a sector
+# array is a vector of vectors, with each row [Circle, StartAngle, EndAngle]
 function area_sector(array)
     circle,theta1,theta2 = array
     if theta1 > theta2
