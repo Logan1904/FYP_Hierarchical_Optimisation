@@ -42,8 +42,6 @@ end
     D = Functions.Circle(2,0,1,[],[],false)
     E = Functions.Circle(0.5,0,0.5,[],[],false)
 
-    #@test Functions.contained(A,A) == nothing
-
     Functions.contained(A,B)
     @test A.Contained == false
     @test B.Contained == true
@@ -120,4 +118,17 @@ end
     Output_Points = Functions.sort_asc_angle(A,Shuffled_Points)
 
     @test Output_Points == True_Points
+end;
+
+@testset "Shoelace Function" begin
+    square = [Functions.Point(-1,-1,[],false),
+              Functions.Point(-1,1,[],false),
+              Functions.Point(1,1,[],false),
+              Functions.Point(1,-1,[],false)]
+    
+    x_circle, y_circle = Functions.draw(Functions.Circle(0,0,2,[],[],false), 0, 2*pi)
+    circle = [Functions.Point(x_circle[i],y_circle[i],[],false) for i in 1:length(x_circle)]
+
+    @test Functions.shoelace(square) == 4
+    @test isapprox(Functions.shoelace(circle), pi*2*2, atol=0.1)
 end;
