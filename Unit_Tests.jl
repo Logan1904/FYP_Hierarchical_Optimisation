@@ -13,7 +13,7 @@ import Functions
     @test Functions.distance(A,B) == sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
 end
 
-@testset "Coincident Circles" begin
+@testset "Coincident Function" begin
     x, y, R = rand(3)
     A = Functions.Circle(x,y,R,[],[],false)
     B = Functions.Circle(x,y,R,[],[],false)
