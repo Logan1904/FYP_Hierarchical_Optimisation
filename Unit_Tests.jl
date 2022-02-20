@@ -13,6 +13,16 @@ import Functions
     @test Functions.distance(A,B) == sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
 end
 
+@testset "Coincident Circles" begin
+    x, y, R = rand(3)
+    A = Functions.Circle(x,y,R,[],[],false)
+    B = Functions.Circle(x,y,R,[],[],false)
+    C = Functions.Circle(x+0.1,y+0.1,R+0.1,[],[],false)
+
+    @test Functions.coincident(A,B) == true
+    @test Functions.coincident(A,C) == false
+end
+
 @testset "Intersection Function" begin
     A = Functions.Circle(0,0,1,[],[],false)
     B = Functions.Circle(1,0,1,[],[],false)
@@ -110,4 +120,4 @@ end
     Output_Points = Functions.sort_asc_angle(A,Shuffled_Points)
 
     @test Output_Points == True_Points
-end
+end;
