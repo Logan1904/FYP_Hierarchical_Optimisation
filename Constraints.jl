@@ -30,7 +30,7 @@ end
 function cons3(x)
     for i in range(1,stop=Int(length(x)/3))
         R_val = x[N_drones*2 + i]
-        val = (R_val == z[N_drones*2 + i])
+        val = (R_val == MADS_input[N_drones*2 + i])
         if !val
             return false
         end
