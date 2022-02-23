@@ -93,7 +93,7 @@ function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
         end
 
         # Defining new MADS problem as it performs better
-        define_problem(z, obj, cons_ext, cons_prog, N_iter)
+        p = define_problem(z, obj, cons_ext, cons_prog, N_iter)
         z = optimize(p)
     end
 
