@@ -4,8 +4,7 @@ using DirectSearch
 import Polygonal_Method
 import Functions
 
-function optimize(z, obj, cons_ext, cons_prog, N_iter; check=false)
-    
+function define_problem(z, obj, cons_ext, cons_prog, N_iter)
     # Define optimization problem
     p = DSProblem(length(z))
     SetInitialPoint(p, z)
@@ -20,6 +19,10 @@ function optimize(z, obj, cons_ext, cons_prog, N_iter; check=false)
         AddProgressiveConstraint(p, i)
     end
 
+    return p
+end
+
+function optimize(p)
     # Optimize
     Optimize!(p)
 
@@ -30,16 +33,11 @@ function optimize(z, obj, cons_ext, cons_prog, N_iter; check=false)
         global result = p.x
     end
 
-    if check
-        global result = check_local_minima(result, obj, cons_ext, cons_prog, N_iter)
-    end
-
     return result
 end
 
 function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
-
-    # check if
+    # Check: 
     # 1) Any circles completely contained by another circle
     # 2) Any circles have ONLY non-contour intersection points
 
@@ -66,6 +64,7 @@ function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
 
         global circle_index_tochange = findall(x -> x == true, contained)
 
+        # if every point on a circle is not a contour point, it is underneath other circles
         for i in 1:length(underneath)
             if all(!,underneath[i])
                 push!(circle_index_tochange, i)
@@ -94,27 +93,8 @@ function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
         end
 
         # Defining new MADS problem as it performs better
-        global p = DSProblem(length(z))
-        SetInitialPoint(p, z)
-        SetObjective(p, obj)
-        SetIterationLimit(p, N_iter)
-
-        # Add constraints to problem
-        for i in cons_ext
-            AddExtremeConstraint(p, i)
-        end
-        for i in cons_prog
-            AddProgressiveConstraint(p, i)
-        end
-
-        Optimize!(p);
-
-        if p.x === nothing
-            z = p.i
-        else
-            z = p.x
-        end
-
+        define_problem(z, obj, cons_ext, cons_prog, N_iter)
+        z = optimize(p)
     end
 
     return z
