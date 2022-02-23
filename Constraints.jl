@@ -2,8 +2,8 @@
 function cons1(x)
     for i in range(1,stop=Int(length(x)/3))
         x_val = x[i]
-        y_val = x[N_circles + i]
-        R_val = x[N_circles*2 + i]
+        y_val = x[N_drones + i]
+        R_val = x[N_drones*2 + i]
         val = (x_val <= domain_x-R_val && x_val >= R_val) && (y_val <= domain_y-R_val && y_val >= R_val)
         if !val
             return false
@@ -16,8 +16,8 @@ end
 # Extreme Constraint: Radius of drone has to be between 1 and R_lim
 function cons2(x)
     for i in range(1,stop=Int(length(x)/3))
-        R_val = x[N_circles*2 + i]
-        val = R_val >= 1 && R_val <= R_lim
+        R_val = x[N_drones*2 + i]
+        val = R_val >= 0 && R_val <= R_lim
         if !val
             return false
         end
@@ -29,8 +29,8 @@ end
 # Extreme Constraint: Radius cannot change
 function cons3(x)
     for i in range(1,stop=Int(length(x)/3))
-        R_val = x[N_circles*2 + i]
-        val = (R_val == z[N_circles*2 + i])
+        R_val = x[N_drones*2 + i]
+        val = (R_val == z[N_drones*2 + i])
         if !val
             return false
         end
@@ -43,8 +43,8 @@ end
 function cons4(x)
     for i in range(1,stop=Int(length(x)/3))
         x_val = x[i]
-        y_val = x[N_circles + i]
-        R_val = x[N_circles*2 + i]
+        y_val = x[N_drones + i]
+        R_val = x[N_drones*2 + i]
 
         if x_val <= 30
             if R_val > 5
