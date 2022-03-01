@@ -10,7 +10,7 @@ using Altro
 function MADS_to_ALTRO(z)
     N_drones = Int(length(z)/3)
     FOV = 90/180*pi # FOV of the sensor
-    x = []
+    x = zeros(12,13)
     for i in range(1,stop=N_drones)
         x_val = z[i]
         y_val = z[N_drones + i]
@@ -18,7 +18,7 @@ function MADS_to_ALTRO(z)
 
         z_val = 2*R_val/FOV
 
-        push!(x, [x_val, y_val, z_val, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        x[i,:] = [x_val, y_val, z_val, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
     end
 
     return x
@@ -47,7 +47,7 @@ function collide(X, sphere_constraint)
 end
 
 function optimize(x_initial, x_final, tf, N_t, sphere_constraint)
-    N_drones = Int(length(x_initial))
+    N_drones = size(x_initial)[1]
 
     model = Quadrotor()
     n,m = size(model)
@@ -59,8 +59,8 @@ function optimize(x_initial, x_final, tf, N_t, sphere_constraint)
 
     for i in 1:N_drones # for the i'th drone
 
-        x0 = SVector{13, Float64}(x_initial[i])
-        xf = SVector{13, Float64}(x_final[i])
+        x0 = SVector{13, Float64}(x_initial[i,:])
+        xf = SVector{13, Float64}(x_final[i,:])
 
         Q = Diagonal(@SVector fill(0.1, n))
         R = Diagonal(@SVector fill(0.01, m))
