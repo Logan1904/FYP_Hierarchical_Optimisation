@@ -187,7 +187,7 @@ end
 """
     sort_asc_angle!(A::Circle, Array::Vector{Point})
 
-Sorts a Vector of Points relative to a Circle in ascending order of angle
+Sorts a Vector of Points relative to a Circle in ascending order of polar angle
 """
 function sort_asc_angle!(A::Circle, Array::Vector{Point})
     N = Int(length(Array))
@@ -209,27 +209,15 @@ function sort_asc_angle!(A::Circle, Array::Vector{Point})
     return Array
 end
 
+"""
+    point_on_circle(A::Circle, Theta::Float64)
 
-# returns x and y vectors of a Circle object (for plotting)
-function draw(A::Circle,theta1,theta2)
-    if theta1 > theta2
-        theta2 = theta2 + 2*pi
-    end
-    arr = LinRange(theta1,theta2,101)
-    return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
-end
-
-
-
-# sort a vector of Point objects relative to a Circle object in ascending order of Polar angle
-
-
-# returns a Point object given a Circle object and Polar angle 
-function point_on_circle(A::Circle,theta)
-    x = A.x + A.R*cos(theta)
-    y = A.y + A.R*sin(theta)
-
-    return Functions.Point(x,y,[],0)
+Returns a Point on a Circle given a polar angle
+"""
+function point_on_circle(A::Circle,Theta::Float64)
+    x = A.x + A.R*cos(Theta)
+    y = A.y + A.R*sin(Theta)
+    return Base_Functions.Point(x,y,[],0)
 end
 
 # get area from a sorted (ACW/CW) vector of points (Circle or Point objects) using Shoelace Method
@@ -403,3 +391,13 @@ function associate2(vector)
 end
 
 end #module end
+
+
+# returns x and y vectors of a Circle object (for plotting)
+function draw(A::Circle,theta1,theta2)
+    if theta1 > theta2
+        theta2 = theta2 + 2*pi
+    end
+    arr = LinRange(theta1,theta2,101)
+    return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
+end
