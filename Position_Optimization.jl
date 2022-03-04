@@ -43,7 +43,8 @@ function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
 
     N_drones = Int(length(z)/3)
 
-    while true
+    iterate = Int(0)
+    while true && iterate < 10
         _, circles, intersections = Polygonal_Method.Area(z, return_objects=true)
 
         # 'contained' vector is Bool vector for each circle, if it's contained
@@ -95,6 +96,7 @@ function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
         # Defining new MADS problem as it performs better
         p = define_problem(z, obj, cons_ext, cons_prog, N_iter)
         z = optimize(p)
+        iterate += 1
     end
 
     return z

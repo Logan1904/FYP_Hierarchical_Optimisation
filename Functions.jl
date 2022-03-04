@@ -1,46 +1,89 @@
 module Functions
+
 using LinearAlgebra
 using Random
 
+"""
+    struct Circle
+
+A circle object
+
+Attributes:
+    - 'x::Float64':             x-position of the circle centre on a 2D Cartesian grid
+    - 'y::Float64':             y-position of the circle centre on a 2D Cartesian grid
+    - 'R::Float64':             Radius
+    - 'Points::Vector{Int}':    Vector of intersection point indices
+    - 'Circles::Vector{Int}':   Vector of intersection circles indices
+    - 'Contained::Bool':        True if contained by another circle
+
+"""
 mutable struct Circle
-    x::Float64 
+    x::Float64
     y::Float64
     R::Float64
-    Points::Any # index of intersection points located on Circle object
-    Circles::Any # index of intersection circles located on Circle object
-    Contained::Bool # 1 if the Circle object is completely contained by another circle, 0 if not
+    Points::Vector{Int}
+    Circles::Vector{Int}
+    Contained::Bool
 end
 
+"""
+    struct Point
+
+A point object
+
+Attributes:
+    - 'x::Float64':             x-position of the point on a 2D Cartesian grid
+    - 'y::Float64':             y-position of the point on a 2D Cartesian grid
+    - 'Circles::Vector{Int}':   Vector of circle indices that form point
+    - 'ID::Bool':               True if point is on outer contour
+
+"""
 mutable struct Point
     x::Float64
     y::Float64
-    Circles::Any # index of the 2 Circle objects that make up the intersection point
-    ID::Bool # 1 if point is on contour, 0 if point contained within a circle, 
+    Circles::Vector{Int}
+    ID::Bool
 end
 
-# form a vector of Circle objects from input vector 
-function make_circles(arr)
-    n = Int(length(arr)/3)
-    x = arr[1:n]
-    y = arr[n+1:2*n]
-    R = arr[2*n+1:3*n]
+"""
+    make_circles(arr)
 
-    circles = []
-    for i in 1:n
-        push!(circles,Functions.Circle(x[i],y[i],R[i],[],[],false))
+Returns a Vector of Circle objects
+
+Arguments:
+    - 'x::{Vector{Float64}}': Vector of x-coordinates
+    - 'y::{Vector{Float64}}:  Vector of y-coordinates
+    - 'R::{Vector{Float64}}:  Vector of radius values
+"""
+function make_circles(Arr)
+    N = Int(length(Arr)/3)
+
+    circles = Vector{Circle}()
+    for i in 1:N
+        x = Arr[i]
+        y = Arr[N + i]
+        R = Arr[2*N + i]
+        push!(circles, Circle(x,y,R,[],[],false))
     end
     
     return circles
 end
 
-# Euclidean distance between centres of 2 Circle objects
+"""
+    distance(A::Circle, B::Circle)
+
+Returns the Euclidean distance between 2 Circle centres
+"""
 function distance(A::Circle,B::Circle)
-    distance = sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
-    return distance
+    return sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
 end
 
-# Checks if 2 circle objects are coincident or not
-function coincident(A,B)
+"""
+    coincident(A::Circle, B::Circle)
+
+Returns 'true' if the 2 Circles are coincident, 'false' otherwise
+"""
+function coincident(A::Circle,B::Circle)
     d = round(distance(A,B), digits=1)
     if d == 0 && A.R == B.R
         return true
@@ -49,7 +92,29 @@ function coincident(A,B)
     end
 end
 
-# Takes in 2 Circle objects, returns Cartesian intersection coordinates - two Tuple{Float64,Float64}
+"""
+    contained(A::Circle, B::Circle)
+
+Checks if a Circle is contained by another and modifies the attribute 'Circle.Contained' accordingly
+"""
+function contained(A::Circle,B::Circle)
+    d = distance(A,B)
+    if d <= abs(A.R - B.R)
+        if A.R < B.R
+            A.Contained = true
+        else
+            B.Contained = true
+        end
+    end
+end
+
+"""
+    intersection(A::Circle, B::Circle)
+
+Returns the intersection coordinates of 2 Circles, in order 'x1,y1,x2,y2'
+Returns 'nothing' if the 2 Circles do not intersect or are tangent
+Calls 'contained!(A::Circle, B::Circle)' if one Circle is contained by the other Circle
+"""
 function intersection(A::Circle,B::Circle)
     d = distance(A,B)
 
@@ -57,8 +122,6 @@ function intersection(A::Circle,B::Circle)
         return nothing
     elseif d <= abs(A.R - B.R)      # one circle within another
         contained(A,B)
-        return nothing
-    elseif d == 0 && A.R == B.R     # coincident circles
         return nothing
     else
         a = (d^2+A.R^2-B.R^2)/(2*d)
@@ -80,88 +143,77 @@ function intersection(A::Circle,B::Circle)
     end
 end
 
-# check if one Circle object within another Circle object
-function contained(A::Circle,B::Circle)
-    d = distance(A,B)
-    if d <= abs(A.R - B.R)
-        if A.R < B.R
-            A.Contained = true
-        else
-            B.Contained = true
-        end
-    end
-end
+"""
+    boundary(A::Circle, P::Point)
 
-# Take a Point object and checks if its within Circle object
-function boundary(A::Circle,point::Point)
-    x = point.x
-    y = point.y
+Returns 'true' if Point P is inside Circle A, 'false' otherwise
+"""
+function boundary(A::Circle,P::Point)
+    x = P.x
+    y = P.y
     
-    if round((x-A.x)^2 + (y-A.y)^2 - A.R^2, digits=8) < 0 #inside circle
+    if round((x-A.x)^2 + (y-A.y)^2 - A.R^2, digits=8) < 0
         return false
-    else return true
+    else 
+        return true
     end
-
 end
 
-# returns x and y vectors of a Circle object (for plotting)
-function draw(A::Circle,theta1,theta2)
-    if theta1 > theta2
-        theta2 = theta2 + 2*pi
-    end
-    arr = LinRange(theta1,theta2,101)
-    return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
-end
+"""
+    sort_acw!(Array::Any, mean_x::Float64, mean_y::Float64)
 
-# sort a Vector of points (Circle or Point objects) anticlockwise
-function sort_acw(Points,mean_x,mean_y)
+Sorts a Vector of Points and/or Circles in anticlockwise order
+"""
+function sort_acw!(Array::Any,mean_x::Float64,mean_y::Float64)
+    N = Int(length(Array))
 
-    for i in range(1,stop=length(Points))
-        for j in range(i+1,stop=length(Points))
-            ax = Points[i].x
-            ay = Points[i].y
-            bx = Points[j].x
-            by = Points[j].y
+    angles = [mod(atan(point.y-mean_y, point.x-mean_x),2*pi) for point in Array]
+    for i in 1:N
+        for j in i+1:N
+            if angles[j] < angles[i]
+                tmp = angles[i]
+                angles[i] = angles[j]
+                angles[j] = tmp
 
-            det = (ax-mean_x)*(by-mean_y) - (bx-mean_x)*(ay-mean_y)
-
-            if det < 0
-                tmpx = Points[i]
-                Points[i] = Points[j]
-                Points[j] = tmpx
-            end
-
-        end
-    end
-    return Points
-end
-
-# sort a vector of Point objects relative to a Circle object in ascending order of Polar angle
-function sort_asc_angle(A::Circle, array)
-    for i in range(1,stop=length(array))
-        for j in range(i+1,stop=length(array))
-            theta1 = mod(atan(array[i].y-A.y,array[i].x-A.x),2*pi)
-            theta2 = mod(atan(array[j].y-A.y,array[j].x-A.x),2*pi)
-            if theta2 < theta1
-                temp = array[i]
-                array[i] = array[j]
-                array[j] = temp
+                tmp2 = Array[i]
+                Array[i] = Array[j]
+                Array[j] = tmp2
             end
         end
     end
-    return array
 end
 
-# returns a Point object given a Circle object and Polar angle 
-function point_on_circle(A::Circle,theta)
-    x = A.x + A.R*cos(theta)
-    y = A.y + A.R*sin(theta)
+"""
+    sort_asc_angle!(A::Circle, Array::Vector{Point})
 
+Sorts a Vector of Points relative to a Circle in ascending order of polar angle
+"""
+function sort_asc_angle!(A::Circle, Array::Vector{Point})
+    N = Int(length(Array))
+
+    mean_x = A.x
+    mean_y = A.y
+
+    sort_acw!(Array,mean_x,mean_y)
+end
+
+"""
+    point_on_circle(A::Circle, Theta::Float64)
+
+Returns a Point on a Circle given a polar angle
+"""
+function point_on_circle(A::Circle,Theta::Float64)
+    x = A.x + A.R*cos(Theta)
+    y = A.y + A.R*sin(Theta)
     return Functions.Point(x,y,[],0)
 end
 
-# get area from a sorted (ACW/CW) vector of points (Circle or Point objects) using Shoelace Method
-function shoelace(Points)
+"""
+    shoelace(Points::Any)
+
+Returns the area of a polygon described by a sorted Vector of Points and/or Circles using the Shoelace algorithm
+"""
+function shoelace(Points::Any)
     xarr = [point.x for point in Points]
     yarr = [point.y for point in Points]
 
@@ -173,17 +225,24 @@ function shoelace(Points)
     return area
 end
 
-# get area of a sector
-# array is a vector of vectors, with each row [Circle, StartAngle, EndAngle]
-function area_sector(array)
-    circle,theta1,theta2 = array
-    if theta1 > theta2
-        theta2 = theta2 + 2*pi
+"""
+    area_sector(A::Circle, Theta1::Float64, Theta2::Float64)
+
+Returns the area of a circular sector, described by a Circle and two polar angles
+
+Arguments:
+    - 'A::Circle':              Circle
+    - 'Theta1::Float64':        Start polar angle of circular sector
+    - 'Theta2::Float64':        End polar angle of circular sector
+"""
+function area_sector(A::Circle,Theta1::Float64,Theta2::Float64)
+    if Theta1 > Theta2
+        Theta2 += 2*pi
     end
 
-    angle = theta2 - theta1
+    angle = Theta2 - Theta1
 
-    area = 0.5*circle.R^2*angle
+    area = 0.5 * A.R^2 * angle
 
     return area
 end
@@ -330,4 +389,15 @@ function associate2(vector)
     return final
 end
 
+# returns x and y vectors of a Circle object (for plotting)
+function draw(A::Circle,theta1,theta2)
+    if theta1 > theta2
+        theta2 = theta2 + 2*pi
+    end
+    arr = LinRange(theta1,theta2,101)
+    return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
+end
+
 end #module end
+
+
