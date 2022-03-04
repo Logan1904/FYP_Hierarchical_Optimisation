@@ -75,11 +75,10 @@ function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
         unique!(circle_index_tochange)
 
         if length(circle_index_tochange) == 0
-            println("Final configuration ok")
             break
         end
 
-        println("Some circles contained by others. Re-generating circle and re-optimizing.")
+        println("Some circles contained by others. Re-generating...")
 
         for i in circle_index_tochange
             # Generate new circle within its radius
