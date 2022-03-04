@@ -66,14 +66,21 @@ function make_circles(x,y,R)
     return circles
 end
 
-# Euclidean distance between centres of 2 Circle objects
+"""
+    distance(A::Circle, B::Circle)
+
+Returns the Euclidean distance between 2 Circle object centres
+"""
 function distance(A::Circle,B::Circle)
-    distance = sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
-    return distance
+    return sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
 end
 
-# Checks if 2 circle objects are coincident or not
-function coincident(A,B)
+"""
+    coincident(A::Circle, B::Circle)
+
+Returns True if the 2 Circle objects are coincident, False otherwise
+"""
+function coincident(A::Circle,B::Circle)
     d = round(distance(A,B), digits=1)
     if d == 0 && A.R == B.R
         return true
