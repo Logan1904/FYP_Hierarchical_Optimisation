@@ -220,8 +220,12 @@ function point_on_circle(A::Circle,Theta::Float64)
     return Base_Functions.Point(x,y,[],0)
 end
 
-# get area from a sorted (ACW/CW) vector of points (Circle or Point objects) using Shoelace Method
-function shoelace(Points)
+"""
+    shoelace(Vector{Any})
+
+Returns the area of a polygon described by a sorted Vector of Points and/or Circles using the Shoelace algorithm
+"""
+function shoelace(Points{Vector{Any}})
     xarr = [point.x for point in Points]
     yarr = [point.y for point in Points]
 
