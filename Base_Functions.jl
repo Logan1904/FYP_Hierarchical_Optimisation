@@ -89,16 +89,36 @@ function coincident(A::Circle,B::Circle)
     end
 end
 
-# Takes in 2 Circle objects, returns Cartesian intersection coordinates - two Tuple{Float64,Float64}
+"""
+    contained!(A::Circle, B::Circle)
+
+Checks if a Circle object is contained by another and modifies the attribute 'Circle.Contained' accordingly
+"""
+function contained!(A::Circle,B::Circle)
+    d = distance(A,B)
+    if d <= abs(A.R - B.R)
+        if A.R < B.R
+            A.Contained = true
+        else
+            B.Contained = true
+        end
+    end
+end
+
+"""
+    intersection(A::Circle, B::Circle)
+
+Returns the intersection coordinates of 2 Circle objects, in order 'x1,y1,x2,y2'
+Returns 'nothing' if the 2 Circle objects do not intersect or are tangent
+Calls 'contained!(A::Circle, B::Circle)' if a Circle object is contained by another
+"""
 function intersection(A::Circle,B::Circle)
     d = distance(A,B)
 
     if d > A.R + B.R                # non-intersecting
         return nothing
     elseif d <= abs(A.R - B.R)      # one circle within another
-        contained(A,B)
-        return nothing
-    elseif d == 0 && A.R == B.R     # coincident circles
+        contained!(A,B)
         return nothing
     else
         a = (d^2+A.R^2-B.R^2)/(2*d)
@@ -117,18 +137,6 @@ function intersection(A::Circle,B::Circle)
         end
 
         return x1,y1,x2,y2
-    end
-end
-
-# check if one Circle object within another Circle object
-function contained(A::Circle,B::Circle)
-    d = distance(A,B)
-    if d <= abs(A.R - B.R)
-        if A.R < B.R
-            A.Contained = true
-        else
-            B.Contained = true
-        end
     end
 end
 
