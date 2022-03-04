@@ -69,7 +69,7 @@ end
 """
     distance(A::Circle, B::Circle)
 
-Returns the Euclidean distance between 2 Circle object centres
+Returns the Euclidean distance between 2 Circle centres
 """
 function distance(A::Circle,B::Circle)
     return sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
@@ -78,7 +78,7 @@ end
 """
     coincident(A::Circle, B::Circle)
 
-Returns True if the 2 Circle objects are coincident, False otherwise
+Returns 'true' if the 2 Circles are coincident, 'false' otherwise
 """
 function coincident(A::Circle,B::Circle)
     d = round(distance(A,B), digits=1)
@@ -92,7 +92,7 @@ end
 """
     contained!(A::Circle, B::Circle)
 
-Checks if a Circle object is contained by another and modifies the attribute 'Circle.Contained' accordingly
+Checks if a Circle is contained by another and modifies the attribute 'Circle.Contained' accordingly
 """
 function contained!(A::Circle,B::Circle)
     d = distance(A,B)
@@ -108,9 +108,9 @@ end
 """
     intersection(A::Circle, B::Circle)
 
-Returns the intersection coordinates of 2 Circle objects, in order 'x1,y1,x2,y2'
-Returns 'nothing' if the 2 Circle objects do not intersect or are tangent
-Calls 'contained!(A::Circle, B::Circle)' if a Circle object is contained by another
+Returns the intersection coordinates of 2 Circles, in order 'x1,y1,x2,y2'
+Returns 'nothing' if the 2 Circles do not intersect or are tangent
+Calls 'contained!(A::Circle, B::Circle)' if one Circle is contained by the other Circle
 """
 function intersection(A::Circle,B::Circle)
     d = distance(A,B)
@@ -140,16 +140,20 @@ function intersection(A::Circle,B::Circle)
     end
 end
 
-# Take a Point object and checks if its within Circle object
-function boundary(A::Circle,point::Point)
-    x = point.x
-    y = point.y
-    
-    if round((x-A.x)^2 + (y-A.y)^2 - A.R^2, digits=8) < 0 #inside circle
-        return false
-    else return true
-    end
+"""
+    boundary(A::Circle, P::Point)
 
+Returns 'true' if Point P is inside Circle A, 'false' otherwise
+"""
+function boundary(A::Circle,P::Point)
+    x = P.x
+    y = P.y
+    
+    if round((x-A.x)^2 + (y-A.y)^2 - A.R^2, digits=8) < 0
+        return false
+    else 
+        return true
+    end
 end
 
 # returns x and y vectors of a Circle object (for plotting)
