@@ -56,10 +56,10 @@ Arguments:
     - 'R{Vector{Float64}}:  Vector of radius values
 """
 function make_circles(x,y,R)
-    n = Int(length(x))
+    N = Int(length(x))
 
     circles = Vector{Circle}()
-    for i in 1:n
+    for i in 1:N
         push!(circles, Circle(x[i],y[i],R[i],[],[],false))
     end
     
@@ -159,12 +159,13 @@ end
 """
     sort_acw!(Array::Vector{Any}, mean_x::Float64, mean_y::Float64)
 
-Sorts a Vector of Point and/or Circle objects in anticlockwise order
+Sorts a Vector of Points and/or Circles in anticlockwise order
 """
 function sort_acw!(Array::Vector{Any},mean_x::Float64,mean_y::Float64)
-    n = Int(length(Array))
-    for i in 1:n
-        for j in i+1:n
+    N = Int(length(Array))
+
+    for i in 1:N
+        for j in i+1:N
             ax = Array[i].x
             ay = Array[i].y
             bx = Array[j].x
@@ -183,7 +184,30 @@ function sort_acw!(Array::Vector{Any},mean_x::Float64,mean_y::Float64)
     return Points
 end
 
+"""
+    sort_asc_angle!(A::Circle, Array::Vector{Point})
 
+Sorts a Vector of Points relative to a Circle in ascending order of angle
+"""
+function sort_asc_angle!(A::Circle, Array::Vector{Point})
+    N = Int(length(Array))
+
+    for i in 1:N
+        for j in i+1:N
+            point = Array[i]
+            theta1 = mod(atan(Array[i].y-A.y,Array[i].x-A.x), 2*pi)
+            theta2 = mod(atan(Array[j].y-A.y,Array[j].x-A.x), 2*pi)
+
+            if theta2 < theta1
+                tmp = Array[i]
+                Array[i] = Array[j]
+                Array[j] = tmp
+            end
+        end
+    end
+
+    return Array
+end
 
 
 # returns x and y vectors of a Circle object (for plotting)
@@ -198,20 +222,7 @@ end
 
 
 # sort a vector of Point objects relative to a Circle object in ascending order of Polar angle
-function sort_asc_angle(A::Circle, array)
-    for i in range(1,stop=length(array))
-        for j in range(i+1,stop=length(array))
-            theta1 = mod(atan(array[i].y-A.y,array[i].x-A.x),2*pi)
-            theta2 = mod(atan(array[j].y-A.y,array[j].x-A.x),2*pi)
-            if theta2 < theta1
-                temp = array[i]
-                array[i] = array[j]
-                array[j] = temp
-            end
-        end
-    end
-    return array
-end
+
 
 # returns a Point object given a Circle object and Polar angle 
 function point_on_circle(A::Circle,theta)
