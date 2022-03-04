@@ -51,9 +51,9 @@ end
 Returns a Vector of Circle objects
 
 Arguments:
-    - 'x{Vector{Float64}}': Vector of x-coordinates
-    - 'y{Vector{Float64}}:  Vector of y-coordinates
-    - 'R{Vector{Float64}}:  Vector of radius values
+    - 'x::{Vector{Float64}}': Vector of x-coordinates
+    - 'y::{Vector{Float64}}:  Vector of y-coordinates
+    - 'R::{Vector{Float64}}:  Vector of radius values
 """
 function make_circles(x,y,R)
     N = Int(length(x))
@@ -221,11 +221,11 @@ function point_on_circle(A::Circle,Theta::Float64)
 end
 
 """
-    shoelace(Vector{Any})
+    shoelace(Points::Vector{Any})
 
 Returns the area of a polygon described by a sorted Vector of Points and/or Circles using the Shoelace algorithm
 """
-function shoelace(Points{Vector{Any}})
+function shoelace(Points::Vector{Any})
     xarr = [point.x for point in Points]
     yarr = [point.y for point in Points]
 
@@ -237,17 +237,24 @@ function shoelace(Points{Vector{Any}})
     return area
 end
 
-# get area of a sector
-# array is a vector of vectors, with each row [Circle, StartAngle, EndAngle]
-function area_sector(array)
-    circle,theta1,theta2 = array
-    if theta1 > theta2
-        theta2 = theta2 + 2*pi
+"""
+    area_sector(Array::Vector{Circle}, Theta1::Float64, Theta2::Float64)
+
+Returns the area of a circular sector, described by a Circle and two polar angles
+
+Arguments:
+    - 'Array::Vector{Circle}':  Vector of Circles
+    - 'Theta1::Float64':        Start polar angle of circular sector
+    - 'Theta2::Float64':        End polar angle of circular sector
+"""
+function area_sector(Array::Vector{Circle},Theta1::Float64,Theta2::Float64)
+    if Theta1 > Theta2
+        Theta2 = Theta2 + 2*pi
     end
 
-    angle = theta2 - theta1
+    angle = Theta2 - Theta1
 
-    area = 0.5*circle.R^2*angle
+    area = 0.5 * Array[i].R^2 * angle
 
     return area
 end
