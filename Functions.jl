@@ -55,12 +55,15 @@ Arguments:
     - 'y::{Vector{Float64}}:  Vector of y-coordinates
     - 'R::{Vector{Float64}}:  Vector of radius values
 """
-function make_circles(x,y,R)
-    N = Int(length(x))
+function make_circles(Arr)
+    N = Int(length(Arr)/3)
 
     circles = Vector{Circle}()
     for i in 1:N
-        push!(circles, Circle(x[i],y[i],R[i],[],[],false))
+        x = Arr[i]
+        y = Arr[N + i]
+        R = Arr[2*N + i]
+        push!(circles, Circle(x,y,R,[],[],false))
     end
     
     return circles
@@ -90,11 +93,11 @@ function coincident(A::Circle,B::Circle)
 end
 
 """
-    contained!(A::Circle, B::Circle)
+    contained(A::Circle, B::Circle)
 
 Checks if a Circle is contained by another and modifies the attribute 'Circle.Contained' accordingly
 """
-function contained!(A::Circle,B::Circle)
+function contained(A::Circle,B::Circle)
     d = distance(A,B)
     if d <= abs(A.R - B.R)
         if A.R < B.R
@@ -118,7 +121,7 @@ function intersection(A::Circle,B::Circle)
     if d > A.R + B.R                # non-intersecting
         return nothing
     elseif d <= abs(A.R - B.R)      # one circle within another
-        contained!(A,B)
+        contained(A,B)
         return nothing
     else
         a = (d^2+A.R^2-B.R^2)/(2*d)
@@ -157,26 +160,24 @@ function boundary(A::Circle,P::Point)
 end
 
 """
-    sort_acw!(Array::Vector{Any}, mean_x::Float64, mean_y::Float64)
+    sort_acw!(Array::Any, mean_x::Float64, mean_y::Float64)
 
 Sorts a Vector of Points and/or Circles in anticlockwise order
 """
-function sort_acw!(Array::Vector{Any},mean_x::Float64,mean_y::Float64)
+function sort_acw!(Array::Any,mean_x::Float64,mean_y::Float64)
     N = Int(length(Array))
 
+    angles = [mod(atan(point.y-mean_y, point.x-mean_x),2*pi) for point in Array]
     for i in 1:N
         for j in i+1:N
-            ax = Array[i].x
-            ay = Array[i].y
-            bx = Array[j].x
-            by = Array[j].y
+            if angles[j] < angles[i]
+                tmp = angles[i]
+                angles[i] = angles[j]
+                angles[j] = tmp
 
-            det = (ax-mean_x)*(by-mean_y) - (bx-mean_x)*(ay-mean_y)
-
-            if det < 0
-                tmp = Array[i]
+                tmp2 = Array[i]
                 Array[i] = Array[j]
-                Array[j] = tmp
+                Array[j] = tmp2
             end
         end
     end
@@ -190,19 +191,10 @@ Sorts a Vector of Points relative to a Circle in ascending order of polar angle
 function sort_asc_angle!(A::Circle, Array::Vector{Point})
     N = Int(length(Array))
 
-    for i in 1:N
-        for j in i+1:N
-            point = Array[i]
-            theta1 = mod(atan(Array[i].y-A.y,Array[i].x-A.x), 2*pi)
-            theta2 = mod(atan(Array[j].y-A.y,Array[j].x-A.x), 2*pi)
+    mean_x = A.x
+    mean_y = A.y
 
-            if theta2 < theta1
-                tmp = Array[i]
-                Array[i] = Array[j]
-                Array[j] = tmp
-            end
-        end
-    end
+    sort_acw!(Array,mean_x,mean_y)
 end
 
 """
@@ -217,11 +209,11 @@ function point_on_circle(A::Circle,Theta::Float64)
 end
 
 """
-    shoelace(Points::Vector{Any})
+    shoelace(Points::Any)
 
 Returns the area of a polygon described by a sorted Vector of Points and/or Circles using the Shoelace algorithm
 """
-function shoelace(Points::Vector{Any})
+function shoelace(Points::Any)
     xarr = [point.x for point in Points]
     yarr = [point.y for point in Points]
 

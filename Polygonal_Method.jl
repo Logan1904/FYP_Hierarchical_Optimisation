@@ -1,19 +1,21 @@
 module Polygonal_Method
+
 import Functions
+
 using Graphs
 
-function Area(arr; print::Bool=false, return_objects::Bool=false)
-    circles = Functions.make_circles(arr)
-    check_coincident(circles)                               #check if any circles are coincident
-    circles,intersections = intersection_points(circles)    #get intersection points for all circles
-    intersections = boundary_ID(circles,intersections)      #obtain boundary ID -> 1: on outer contour, 0: contained inside contour
+function Area(Arr; print::Bool=false, return_objects::Bool=false)
+    circles = Functions.make_circles(Arr)
+    check_coincident!(circles)                              #check if any circles are coincident
+    intersections = intersection_points(circles)            #get intersection points for all circles
+    boundary_ID!(circles,intersections)                     #obtain boundary ID -> 1: on outer contour, 0: contained inside contour
     polygons = form_polygons(circles,intersections)         #form polygons
-    polygons = sort_polygon_acw(circles,polygons)           #sort polygons acw
+    sort_polygon_acw!(circles,polygons)                     #sort polygons acw
     contour = form_contour(circles)                         #form contour
     sectors = form_sectors(circles,intersections,contour)   #form sectors
 
     area = 0
-    for i in range(1,stop=size(polygons)[1])                #obtain area of polygons
+    for i in 1:length(polygons)                             #obtain area of polygons
         var = Functions.shoelace(polygons[i])
         area = area + var
         if print
@@ -21,8 +23,9 @@ function Area(arr; print::Bool=false, return_objects::Bool=false)
         end
     end
 
-    for i in range(1,stop=size(sectors)[1])                 #obtain area of sectors
-        var = Functions.area_sector(sectors[i])
+    for i in 1:length(sectors)                              #obtain area of sectors
+        A,Theta1,Theta2 = sectors[i]
+        var = Functions.area_sector(A,Theta1,Theta2)
         area = area + var
         if print
             println("Area of sector ",i,": ",var)
@@ -41,11 +44,12 @@ function Area(arr; print::Bool=false, return_objects::Bool=false)
 
 end
 
-function check_coincident(circles)
+function check_coincident!(circles::Vector{Functions.Circle})
     clean = false
-    while clean == false
+    while !clean
+        N = Int(length(circles))
         clean = true
-        for i in range(1,stop=length(circles)), j in range(i+1,stop=length(circles))
+        for i in 1:N, j in i+1:N
             A = circles[i]
             B = circles[j]
 
@@ -58,10 +62,12 @@ function check_coincident(circles)
     end
 end
 
-function intersection_points(circles)
-    intersections = []
-    for i in range(1,stop=length(circles))
-        for j in range(i+1,stop=length(circles))
+function intersection_points(circles::Vector{Functions.Circle})
+    N = Int(length(circles))
+
+    intersections = Vector{Functions.Point}()
+    for i in 1:N
+        for j in i+1:N
             coords = Functions.intersection(circles[i],circles[j])
 
             if isnothing(coords) == false
@@ -74,7 +80,7 @@ function intersection_points(circles)
                 push!(intersections,P1)
                 push!(intersections,P2)
 
-                dum = size(intersections)[1]
+                dum = Int(length(intersections))
                 push!(A.Points,dum-1,dum)
                 push!(B.Points,dum-1,dum)
 
@@ -85,20 +91,20 @@ function intersection_points(circles)
         end
     end
 
-    return circles, intersections
+    return intersections
 end
 
-function boundary_ID(circles,intersections)
-    for i in range(1,stop=size(intersections)[1])
-        point = intersections[i]
+function boundary_ID!(circles::Vector{Functions.Circle},intersections::Vector{Functions.Point})
+    for i in 1:Int(length(intersections))
+        P = intersections[i]
 
-        for j in range(1,stop=length(circles))
-            circle = circles[j]
+        for j in 1:Int(length(circles))
+            A = circles[j]
             
-            ID = Functions.boundary(circle,point)
+            ID = Functions.boundary(A,P)
 
             if ID == 0
-                point.ID = ID
+                P.ID = ID
                 break
             else
                 continue
@@ -106,8 +112,6 @@ function boundary_ID(circles,intersections)
 
         end
     end
-
-    return intersections
 end
 
 function form_polygons_graph(circles, intersections)
@@ -184,11 +188,13 @@ function form_polygons_graph(circles, intersections)
     return polygons
 end
 
-function form_polygons(circles,intersections)
-    polygon = []
-    big_polygon = []
-    for i in range(1,stop=length(circles))
-        for j in range(i+1,stop=length(circles))
+function form_polygons(circles::Vector{Functions.Circle},intersections::Vector{Functions.Point})
+    N = Int(length(circles))
+
+    polygon = Vector{Any}()
+    big_polygon = Vector{Any}()
+    for i in 1:N
+        for j in i+1:N
             A = circles[i]
             B = circles[j]
 
@@ -203,11 +209,11 @@ function form_polygons(circles,intersections)
             # now obtain shared points between 2 circles only if the point is on contour boundary
             shared_points = [intersections[k] for k in shared_points_index if intersections[k].ID == 1]
 
-            if length(shared_points) == 0       # no shared contour points
+            if length(shared_points) == 0                                       # no shared contour points
                 continue
-            elseif length(shared_points) == 2   # 2 shared contour points -> a 4 sided polygon
+        elseif length(shared_points) == 2                                       # 2 shared contour points -> a 4 sided polygon
                 push!(polygon, [A, B, shared_points[1], shared_points[2]])
-            elseif length(shared_points) == 1   # 1 shared contour point -> part of a bigger >4 sided polygon
+        elseif length(shared_points) == 1                                       # 1 shared contour point -> part of a bigger >4 sided polygon
                 push!(big_polygon, [[A, B], shared_points[1]])
             end
             
@@ -220,9 +226,9 @@ function form_polygons(circles,intersections)
         big_polygon = Functions.associate2(big_polygon)
 
         #unpack and form unique points of big polygon
-        for i in range(1,stop=size(big_polygon)[1])
+        for i in 1:size(big_polygon)[1]
             storage = [] 
-            for j in range(1,stop=size(big_polygon[i])[1])
+            for j in 1:size(big_polygon[i])[1]
                 A,B = big_polygon[i][j][1]
                 point = big_polygon[i][j][2]
                 push!(storage,A,B,point)
@@ -237,15 +243,15 @@ function form_polygons(circles,intersections)
     return polygon
 end
 
-function sort_polygon_acw(circles,polygon)# sort polygon points ACW and obtain area
-    for i in range(1,stop=size(polygon)[1])
-        if size(polygon[i])[1] == 4 # for 4 sided polygon, sort acw with centre as the average of the 2 circular centres
+function sort_polygon_acw!(circles,polygon)
+    for i in 1:length(polygon)
+        if size(polygon[i])[1] == 4                                                             # for 4 sided polygon, sort acw with centre as the average of the 2 circular centres
             dummy = [point for point in polygon[i] if isa(point,Functions.Circle) == true]
             mean_x = sum([point.x for point in dummy])/2
             mean_y = sum([point.y for point in dummy])/2
 
-            polygon[i] = Functions.sort_acw(polygon[i],mean_x,mean_y)
-        else # for >4 sided polygon, sort acw/cw by jumping between points and seeing which circle is shared
+            Functions.sort_acw!(polygon[i],mean_x,mean_y)
+        else                                                                                    # for >4 sided polygon, sort acw/cw by jumping between points and seeing which circle is shared
 
             if typeof(polygon[i][1]) == Functions.Circle
                 polygon[i] = circshift(polygon[i],1)
@@ -285,8 +291,6 @@ function sort_polygon_acw(circles,polygon)# sort polygon points ACW and obtain a
             polygon[i] = dummy
         end
     end
-    
-    return polygon
 end
 
 function form_contour(circles)# form circle associations
@@ -312,7 +316,7 @@ function form_sectors(circles,intersections,contour)# form circular sectors
     for i in range(1,stop=size(contour)[1])
 
         if size(contour[i])[1] == 1 # just the circle
-            push!(sectors,[contour[i][1],0,2*pi])
+            push!(sectors,[contour[i][1],0.0,2*pi])
             continue
         end
 
@@ -321,7 +325,7 @@ function form_sectors(circles,intersections,contour)# form circular sectors
             index = circle.Points
             boundary_points = [intersections[x] for x in index if intersections[x].ID == 1]
 
-            boundary_points = Functions.sort_asc_angle(circle,boundary_points)
+            Functions.sort_asc_angle!(circle,boundary_points)
             theta = [mod(atan(point.y-circle.y,point.x-circle.x),2*pi) for point in boundary_points]
 
             for k in range(1,stop=length(theta))

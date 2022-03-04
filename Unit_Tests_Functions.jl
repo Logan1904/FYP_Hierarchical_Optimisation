@@ -71,30 +71,16 @@ end
 end
 
 @testset "ACW Sort Function" begin
-    x,y = rand(-1000:1000,2) #random points on a circle
+    x = Float64(rand(-1000:1000,1)[1]) #random points on a circle
+    y = Float64(rand(-1000:1000,1)[1])
     R = rand(1:1000,2)[1]
     N = rand(2:1000,1)[1]
-    angles = LinRange(0,2*pi,N)
+    angles = LinRange(0.0,2*pi,N)
 
     True_Points = [Functions.Point(x + R*cos(angle), y + R*sin(angle),[],false) for angle in angles]
-    Shuffled_Points = shuffle!(True_Points)
-    
-    Output_Points = Functions.sort_acw(Shuffled_Points,x,y)
 
-    while Output_Points[1] != True_Points[1]
-        Output_Points = circshift(Output_Points,1)
-    end
-
-    @test Output_Points == True_Points
-
-
-    line = LinRange(x,y,N) #straight line at y=1
-    y = 1
-
-    True_Points = [Functions.Point(thispoint,y,[],false) for thispoint in line]
-    Shuffled_Points = shuffle!(True_Points)
-
-    Output_Points = Functions.sort_acw(Shuffled_Points,0,0)
+    Output_Points = shuffle(True_Points)
+    Functions.sort_acw!(Output_Points,x,y)
 
     while Output_Points[1] != True_Points[1]
         Output_Points = circshift(Output_Points,1)
@@ -110,12 +96,12 @@ end
     A = Functions.Circle(x,y,R,[],[],false)
 
     N = rand(2:1000,1)[1]
-    angles = LinRange(0,2*pi,N)
+    angles = LinRange(0.,2*pi,N)
 
     True_Points = [Functions.Point(x + R*cos(angle), y + R*sin(angle),[],false) for angle in angles]
-    Shuffled_Points = shuffle!(True_Points)
 
-    Output_Points = Functions.sort_asc_angle(A,Shuffled_Points)
+    Output_Points = shuffle(True_Points)
+    Functions.sort_asc_angle!(A,Output_Points)
 
     @test Output_Points == True_Points
 end;
