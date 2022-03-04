@@ -399,5 +399,3 @@ function draw(A::Circle,theta1,theta2)
 end
 
 end #module end
-
-
