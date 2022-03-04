@@ -1,33 +1,66 @@
-module Functions
+module Base_Functions
+
 using LinearAlgebra
 using Random
 
+"""
+    struct Circle
+
+A circle object
+
+Attributes:
+    - 'x::Float64':             x-position of the circle centre on a 2D Cartesian grid
+    - 'y::Float64':             y-position of the circle centre on a 2D Cartesian grid
+    - 'R::Float64':             Radius
+    - 'Points::Vector{Int}':    Vector of intersection point indices
+    - 'Circles::Vector{Int}':   Vector of intersection circles indices
+    - 'Contained::Bool':        True if is contained by another circle
+
+"""
 mutable struct Circle
-    x::Float64 
+    x::Float64
     y::Float64
     R::Float64
-    Points::Any # index of intersection points located on Circle object
-    Circles::Any # index of intersection circles located on Circle object
-    Contained::Bool # 1 if the Circle object is completely contained by another circle, 0 if not
+    Points::Vector{Int}
+    Circles::Vector{Int}
+    Contained::Bool
 end
 
+"""
+    struct Point
+
+A point object
+
+Attributes:
+    - 'x::Float64':             x-position of the point on a 2D Cartesian grid
+    - 'y::Float64':             y-position of the point on a 2D Cartesian grid
+    - 'Circles::Vector{Int}':   Vector of circle indices that form point
+    - 'ID::Bool':               True if point is on outer contour
+
+"""
 mutable struct Point
     x::Float64
     y::Float64
-    Circles::Any # index of the 2 Circle objects that make up the intersection point
-    ID::Bool # 1 if point is on contour, 0 if point contained within a circle, 
+    Circles::Vector{Int}
+    ID::Bool
 end
 
-# form a vector of Circle objects from input vector 
-function make_circles(arr)
-    n = Int(length(arr)/3)
-    x = arr[1:n]
-    y = arr[n+1:2*n]
-    R = arr[2*n+1:3*n]
+"""
+    make_circles(arr)
 
-    circles = []
+Returns a Vector of Circle objects
+
+Arguments:
+    - 'x{Vector{Float64}}': Vector of x-coordinates
+    - 'y{Vector{Float64}}:  Vector of y-coordinates
+    - 'R{Vector{Float64}}:  Vector of radius values
+"""
+function make_circles(x,y,R)
+    n = Int(length(x))
+
+    circles = Vector{Circle}()
     for i in 1:n
-        push!(circles,Functions.Circle(x[i],y[i],R[i],[],[],false))
+        push!(circles, Circle(x[i],y[i],R[i],[],[],false))
     end
     
     return circles
