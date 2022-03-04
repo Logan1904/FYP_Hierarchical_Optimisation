@@ -156,6 +156,36 @@ function boundary(A::Circle,P::Point)
     end
 end
 
+"""
+    sort_acw!(Array::Vector{Any}, mean_x::Float64, mean_y::Float64)
+
+Sorts a Vector of Point and/or Circle objects in anticlockwise order
+"""
+function sort_acw!(Array::Vector{Any},mean_x::Float64,mean_y::Float64)
+    n = Int(length(Array))
+    for i in 1:n
+        for j in i+1:n
+            ax = Array[i].x
+            ay = Array[i].y
+            bx = Array[j].x
+            by = Array[j].y
+
+            det = (ax-mean_x)*(by-mean_y) - (bx-mean_x)*(ay-mean_y)
+
+            if det < 0
+                tmp = Points[i]
+                Points[i] = Points[j]
+                Points[j] = tmp
+            end
+        end
+    end
+
+    return Points
+end
+
+
+
+
 # returns x and y vectors of a Circle object (for plotting)
 function draw(A::Circle,theta1,theta2)
     if theta1 > theta2
@@ -165,28 +195,7 @@ function draw(A::Circle,theta1,theta2)
     return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
 end
 
-# sort a Vector of points (Circle or Point objects) anticlockwise
-function sort_acw(Points,mean_x,mean_y)
 
-    for i in range(1,stop=length(Points))
-        for j in range(i+1,stop=length(Points))
-            ax = Points[i].x
-            ay = Points[i].y
-            bx = Points[j].x
-            by = Points[j].y
-
-            det = (ax-mean_x)*(by-mean_y) - (bx-mean_x)*(ay-mean_y)
-
-            if det < 0
-                tmpx = Points[i]
-                Points[i] = Points[j]
-                Points[j] = tmpx
-            end
-
-        end
-    end
-    return Points
-end
 
 # sort a vector of Point objects relative to a Circle object in ascending order of Polar angle
 function sort_asc_angle(A::Circle, array)
