@@ -1,4 +1,4 @@
-module Base_Functions
+module Functions
 
 using LinearAlgebra
 using Random
@@ -14,7 +14,7 @@ Attributes:
     - 'R::Float64':             Radius
     - 'Points::Vector{Int}':    Vector of intersection point indices
     - 'Circles::Vector{Int}':   Vector of intersection circles indices
-    - 'Contained::Bool':        True if is contained by another circle
+    - 'Contained::Bool':        True if contained by another circle
 
 """
 mutable struct Circle
@@ -174,14 +174,12 @@ function sort_acw!(Array::Vector{Any},mean_x::Float64,mean_y::Float64)
             det = (ax-mean_x)*(by-mean_y) - (bx-mean_x)*(ay-mean_y)
 
             if det < 0
-                tmp = Points[i]
-                Points[i] = Points[j]
-                Points[j] = tmp
+                tmp = Array[i]
+                Array[i] = Array[j]
+                Array[j] = tmp
             end
         end
     end
-
-    return Points
 end
 
 """
@@ -205,8 +203,6 @@ function sort_asc_angle!(A::Circle, Array::Vector{Point})
             end
         end
     end
-
-    return Array
 end
 
 """
@@ -217,7 +213,7 @@ Returns a Point on a Circle given a polar angle
 function point_on_circle(A::Circle,Theta::Float64)
     x = A.x + A.R*cos(Theta)
     y = A.y + A.R*sin(Theta)
-    return Base_Functions.Point(x,y,[],0)
+    return Functions.Point(x,y,[],0)
 end
 
 """
@@ -238,23 +234,23 @@ function shoelace(Points::Vector{Any})
 end
 
 """
-    area_sector(Array::Vector{Circle}, Theta1::Float64, Theta2::Float64)
+    area_sector(A::Circle, Theta1::Float64, Theta2::Float64)
 
 Returns the area of a circular sector, described by a Circle and two polar angles
 
 Arguments:
-    - 'Array::Vector{Circle}':  Vector of Circles
+    - 'A::Circle':              Circle
     - 'Theta1::Float64':        Start polar angle of circular sector
     - 'Theta2::Float64':        End polar angle of circular sector
 """
-function area_sector(Array::Vector{Circle},Theta1::Float64,Theta2::Float64)
+function area_sector(A::Circle,Theta1::Float64,Theta2::Float64)
     if Theta1 > Theta2
-        Theta2 = Theta2 + 2*pi
+        Theta2 += 2*pi
     end
 
     angle = Theta2 - Theta1
 
-    area = 0.5 * Array[i].R^2 * angle
+    area = 0.5 * A.R^2 * angle
 
     return area
 end
@@ -401,9 +397,6 @@ function associate2(vector)
     return final
 end
 
-end #module end
-
-
 # returns x and y vectors of a Circle object (for plotting)
 function draw(A::Circle,theta1,theta2)
     if theta1 > theta2
@@ -412,3 +405,7 @@ function draw(A::Circle,theta1,theta2)
     arr = LinRange(theta1,theta2,101)
     return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
 end
+
+end #module end
+
+
