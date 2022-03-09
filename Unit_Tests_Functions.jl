@@ -112,7 +112,7 @@ end;
               Functions.Point(1,1,[],false),
               Functions.Point(1,-1,[],false)]
     
-    x_circle, y_circle = Functions.draw(Functions.Circle(0,0,2,[],[],false), 0, 2*pi)
+    x_circle, y_circle = Functions.draw(Functions.Circle(0,0,2,[],[],false), 0.0, 2*pi)
     circle = [Functions.Point(x_circle[i],y_circle[i],[],false) for i in 1:length(x_circle)]
 
     @test Functions.shoelace(square) == 4
