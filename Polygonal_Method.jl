@@ -4,7 +4,7 @@ import Functions
 
 using Graphs
 
-function Area(Arr; print::Bool=false, return_objects::Bool=false)
+function Area(Arr; return_objects::Bool=false, return_graph::Bool=false)
     circles = Functions.make_circles(Arr)
     check_coincident!(circles)                              #check if any circles are coincident
     intersections = intersection_points(circles)            #get intersection points for all circles
@@ -18,26 +18,20 @@ function Area(Arr; print::Bool=false, return_objects::Bool=false)
     for i in 1:length(polygons)                             #obtain area of polygons
         var = Functions.shoelace(polygons[i])
         area = area + var
-        if print
-            println("Area of polygon ",i,": ",var)
-        end
     end
 
     for i in 1:length(sectors)                              #obtain area of sectors
         A,Theta1,Theta2 = sectors[i]
         var = Functions.area_sector(A,Theta1,Theta2)
         area = area + var
-        if print
-            println("Area of sector ",i,": ",var)
-        end
-    end
-
-    if print
-        println("Total area (Polygonal): ",area)
     end
 
     if return_objects
         return area, circles, intersections, polygons, sectors
+    end
+
+    if return_graph
+        return area, circles, intersections, polygons, sectors, g
     end
 
     return area
@@ -129,7 +123,7 @@ function form_polygons_graph(circles, intersections)
                 point1 = contour_points[i]
                 point2 = contour_points[j]
 
-                if point1.x == point2.x && point1.y == point2.y
+                if isapprox(point1.x,point2.x,atol=0.1) && isapprox(point1.y,point2.y,atol=0.1)
                     deleteat!(contour_points, [i,j]) # delete old points with same x,y coords formed from different circles
                     new_circles = unique(vcat(point1.Circles, point2.Circles)) # get the circles that intersect on the point, no repeated circles
                     new_point = Functions.Point(point1.x, point1.y, new_circles, 1)
@@ -178,14 +172,65 @@ function form_polygons_graph(circles, intersections)
             end
         end
     end
+
+    f = copy(g)
     
+    special_nodes = []
+    for i in nv(g)-length(circles)+1:nv(g)
+        n_edges = degree(g,i)
+        if n_edges > 2 && n_edges %2 == 0
+            push!(special_nodes,i)
+        end
+    end
+    
+    poly = []
+    for i in 1:length(special_nodes)
+        for j in i+1:length(special_nodes)
+            node1 = special_nodes[i]
+            node2 = special_nodes[j]
+    
+            paths = yen_k_shortest_paths(g,node1,node2,weights(g),2).paths
+            if length(paths) == 0
+                continue
+            end
+            check = union(paths[1][2:end-1],paths[2][2:end-1])
+    
+            super_break = false
+            for k in 1:length(check)
+                if check[k] in special_nodes
+                    #println("Node ",node1," to node ",node2," is invalid")
+                    super_break = true
+                    break
+                end
+            end
+    
+            if super_break
+                continue
+            end
+    
+            push!(poly,paths)
+    
+            for vertex in check
+                rem_edge!(g,node1,vertex)
+                rem_edge!(g,node2,vertex)
+            end
+    
+        end
+    end
+    
+    for i in 1:length(poly)
+        poly[i] = union(poly[i][1],poly[i][2])
+    end
+    
+    poly = vcat(poly,cycle_basis(g))
+
     # get the minimal collection of cycles
     # a cycle is essentially a polygon
-    cycles = cycle_basis(g)
+    #cycles = cycle_basis(g)
 
-    polygons = [nodes[i] for i in cycles] #put the corresponding point and circle objects into polygons vector
+    polygons = [nodes[i] for i in poly] #put the corresponding point and circle objects into polygons vector
 
-    return polygons
+    return polygons, f
 end
 
 function form_polygons(circles::Vector{Functions.Circle},intersections::Vector{Functions.Point})
