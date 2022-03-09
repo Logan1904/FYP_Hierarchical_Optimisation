@@ -1,13 +1,40 @@
 module MonteCarlo_Method
 import Functions
 
-function Area(arr,N_MC,domain; print::Bool=false)
+function Area(arr,N_MC; print::Bool=false)
     circles = Functions.make_circles(arr)
+
+    max_x = circles[1].x + circles[1].R
+    min_x = circles[1].x - circles[1].R
+    max_y = circles[1].y + circles[1].R
+    min_y = circles[1].y - circles[1].R
+    for i in 2:length(circles)
+        A = circles[i]
+        x = A.x
+        y = A.y
+        R = A.R
+
+        if x+R > max_x
+            max_x = x+R
+        end
+
+        if x-R < min_x
+            min_x = x-R
+        end
+
+        if y+R > max_y
+            max_y = y+R
+        end
+
+        if y-R < min_y
+            min_y = y-R
+        end
+    end
+
     count = 0
-    domain_x,domain_y = domain
     for i in range(1,stop=N_MC)
-        point_x = rand(1)[1]*(domain_x)
-        point_y = rand(1)[1]*(domain_y)
+        point_x = rand(1)[1]*(max_x-min_x)+min_x
+        point_y = rand(1)[1]*(max_y-min_y)+min_y
 
         Point = Functions.Point(point_x,point_y,[],false)
 
@@ -23,7 +50,7 @@ function Area(arr,N_MC,domain; print::Bool=false)
 
     end
 
-    area = count/N_MC * (domain_x*domain_y)
+    area = count/N_MC * ((max_x-min_x)*(max_y-min_y))
     if print
         println("Total Area (MonteCarlo): ",area)
     end
