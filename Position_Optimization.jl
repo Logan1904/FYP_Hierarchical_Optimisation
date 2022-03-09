@@ -85,11 +85,14 @@ function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
             x_old = z[i]
             y_old = z[N_drones + i]
             R_old = z[N_drones*2 + i]
+
             x_new = rand(x_old-R_old:x_old+R_old)[1]
             y_new = rand(y_old-R_old:y_old+R_old)[1]
+            R_new = 1.0
 
             z[i] = x_new
             z[N_drones + i] = y_new
+            z[N_drones*2 + i] = R_new
         end
 
         # Defining new MADS problem as it performs better
