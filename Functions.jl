@@ -46,28 +46,41 @@ mutable struct Point
 end
 
 """
-    make_circles(arr)
+    make_circles(arr::Vector{Float64})
 
 Returns a Vector of Circle objects
 
 Arguments:
-    - 'x::{Vector{Float64}}': Vector of x-coordinates
-    - 'y::{Vector{Float64}}:  Vector of y-coordinates
-    - 'R::{Vector{Float64}}:  Vector of radius values
+    - 'Arr::{Vector{Float64}}': Vector of x,y coordinates with radii values, in the order [x;y;R]
 """
-function make_circles(Arr)
-    N = Int(length(Arr)/3)
+function make_circles(arr::Vector{Float64})
+    N = Int(length(arr)/3)
 
     circles = Vector{Circle}()
     for i in 1:N
-        x = Arr[i]
-        y = Arr[N + i]
-        R = Arr[2*N + i]
+        x = arr[i]
+        y = arr[N + i]
+        R = arr[2*N + i]
         push!(circles, Circle(x,y,R,[],[],false))
     end
     
     return circles
 end
+
+"""
+    draw(A::Circle, theta1::Float64, theta2::Float64)
+
+Returns 2 vectors of x and y coordinates corresponding to the Circle
+"""
+# returns x and y vectors of a Circle object (for plotting)
+function draw(A::Circle,theta1::Float64,theta2::Float64)
+    if theta1 > theta2
+        theta2 = theta2 + 2*pi
+    end
+    arr = LinRange(theta1,theta2,101)
+    return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
+end
+
 
 """
     distance(A::Circle, B::Circle)
@@ -77,6 +90,25 @@ Returns the Euclidean distance between 2 Circle centres
 function distance(A::Circle,B::Circle)
     return sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
 end
+
+"""
+    distance(A::Point, B::Point)
+
+Returns the Euclidean distance between 2 Points
+"""
+function distance(A::Point,B::Point)
+    return sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
+end
+
+"""
+    distance(x1::Float64, y1::Float64, x2::Float64, y2::Float64)
+
+Returns the Euclidean distance between the 2 points (x1,y1) and (x2,y2)
+"""
+function distance(x1::Float64,y1::Float64,x2::Float64,y2::Float64)
+    return sqrt((x1-x2)^2 + (y1-y2)^2)
+end
+
 
 """
     coincident(A::Circle, B::Circle)
@@ -118,9 +150,9 @@ Calls 'contained!(A::Circle, B::Circle)' if one Circle is contained by the other
 function intersection(A::Circle,B::Circle)
     d = distance(A,B)
 
-    if d > A.R + B.R                # non-intersecting
+    if d > A.R + B.R                        # non-intersecting
         return nothing
-    elseif d <= abs(A.R - B.R)      # one circle within another
+    elseif d <= abs(A.R - B.R)              # one circle within another
         contained(A,B)
         return nothing
     else
@@ -135,7 +167,7 @@ function intersection(A::Circle,B::Circle)
         x2 = varx - h*(B.y-A.y)/d
         y2 = vary + h*(B.x-A.x)/d
 
-        if x1 == x2 && y1 == y2     # tangent circles -> we take it as non-intersecting
+        if distance(x1,y1,x2,y2) < 0.25     # tangent circles -> we take it as non-intersecting
             return nothing
         end
 
@@ -389,13 +421,6 @@ function associate2(vector)
     return final
 end
 
-# returns x and y vectors of a Circle object (for plotting)
-function draw(A::Circle,theta1,theta2)
-    if theta1 > theta2
-        theta2 = theta2 + 2*pi
-    end
-    arr = LinRange(theta1,theta2,101)
-    return A.x .+ A.R*cos.(arr), A.y .+ A.R*sin.(arr)
-end
+
 
 end #module end
