@@ -9,8 +9,9 @@ using Altro
 # Function to change MADS vector structure to ALTRO vector structure
 function MADS_to_ALTRO(z)
     N_drones = Int(length(z)/3)
-    FOV = 90/180*pi # FOV of the sensor
-    x = zeros(12,13)
+    FOV = 90/180*pi    
+                 # FOV of the sensor
+    x = []
     for i in range(1,stop=N_drones)
         x_val = z[i]
         y_val = z[N_drones + i]
@@ -18,7 +19,7 @@ function MADS_to_ALTRO(z)
 
         z_val = 2*R_val/FOV
 
-        x[i,:] = [x_val, y_val, z_val, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+        push!(x, RBState([x_val, y_val, z_val], UnitQuaternion(I), zeros(3), zeros(3)));
     end
 
     return x
@@ -46,54 +47,40 @@ function collide(X, sphere_constraint)
     return sphere_constraint, false
 end
 
-function optimize(x_initial, x_final, tf, N_t, sphere_constraint)
-    N_drones = size(x_initial)[1]
+function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt)
+    N_drones = length(x_initial)
 
-    model = Quadrotor()
+    model = Quadrotor(mass=mass, J=J, gravity=gravity, motor_dist=motor_dist, kf=kf, km=km)
     n,m = size(model)
 
     # Matrix of states; 1st dim = drone, 2nd dim = states, 3rd dim = time
-    X = zeros(Float64, (N_drones, 13, N_t))
+    X = zeros(Float64, (N_drones, 13, Nt))
     # Matrix of controls; 1st dim = drone, 2nd dim = control input, 3rd dim = time
-    U = zeros(Float64, (N_drones, 4, N_t-1))
+    U = zeros(Float64, (N_drones, 4, Nt-1))
 
     for i in 1:N_drones # for the i'th drone
+        # initial and final conditions
+        x0 = SVector{13, Float64}(x_initial[i])
+        xf = SVector{13, Float64}(x_final[i])
 
-        x0 = SVector{13, Float64}(x_initial[i,:])
-        xf = SVector{13, Float64}(x_final[i,:])
-
+        # objective
         Q = Diagonal(@SVector fill(0.1, n))
-        R = Diagonal(@SVector fill(0.01, m))
+        R = Diagonal(@SVector fill(0.1, m))
         Qf = Diagonal(@SVector fill(100.0, n))
+        objective = LQRObjective(Q,R,Qf,xf,Nt)
 
-        objective = LQRObjective(Q,R,Qf,xf,N_t)
-
-        state_lower_bound = SVector{13, Float64}([0.0,0.0,0.0,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5])
-        state_upper_bound = SVector{13, Float64}([50.0,50,50,1,1,1,1,5,5,5,5,5,5])
-        control_lower_bound = SVector{4, Float64}([0,0,0,0])
-        control_upper_bound = SVector{4, Float64}([1.5,1.5,1.5,1.5])
-
-        cons = ConstraintList(n,m,N_t)
-        add_constraint!(cons, BoundConstraint(n,m,x_min=state_lower_bound,x_max=state_upper_bound,u_min=control_lower_bound,u_max=control_upper_bound),1:N_t-1)
-        #add_constraint!(cons, GoalConstraint(xf), N_t)
-
-        for j in 1:length(sphere_constraint)
-            if sphere_constraint[j][1] == i
-                xpos = sphere_constraint[j][2]
-                ypos = sphere_constraint[j][3]
-                zpos = sphere_constraint[j][4]
-                add_constraint!(cons, SphereConstraint(n,[xpos],[ypos],[zpos],[2.1],1,2,3),1:N_t)
-            end
-        end
-
+        # constraints
+        cons = ConstraintList(n,m,Nt)
+        u_min = zeros(4)
+        u_max = fill(1.0,4)
+        add_constraint!(cons, BoundConstraint(n,m, u_min=u_min, u_max=u_max), 1:Nt-1)
+        
+        # problem
         prob = Problem(model, objective, xf, tf, x0=x0, constraints=cons)
 
-        u0 = zeros(model)[2]
-        initial_controls!(prob, u0)
-
         opts = SolverOptions(
-            cost_tolerance_intermediate=1e-2,
-            penalty_scaling=10.,
+            cost_tolerance_intermediate=1.0,
+            penalty_scaling=5.,
             penalty_initial=1.0
         )
 
@@ -101,12 +88,12 @@ function optimize(x_initial, x_final, tf, N_t, sphere_constraint)
         solve!(altro);
         
         # Store states
-        for j in 1:N_t
-            X[i,:,j] = states(altro)[j]
+        for k in 1:Nt
+            X[i,:,k] = states(altro)[k]
         end
         # Store controls
-        for j in 1:N_t-1
-            U[i,:,j] = controls(altro)[j]
+        for k in 1:Nt-1
+            U[i,:,k] = controls(altro)[k]
         end
     end
 
