@@ -12,10 +12,6 @@ R_lim = 10
 # MADS Parameters
 N_iter = 100
 
-# Generate circles
-x_arr = Vector{Float64}(undef,0)
-y_arr = Vector{Float64}(undef,0)
-R_arr = Vector{Float64}(undef,0)
 
 for i in range(1,stop=N_drones)
     x = rand(R_lim:domain_x-R_lim)[1]
