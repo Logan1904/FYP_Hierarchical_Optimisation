@@ -139,6 +139,11 @@ function form_polygons_graph(circles, intersections)
     end
 
     tmp = [point.Circles for point in contour_points]
+
+    if size(tmp)[1] == 0
+        return [], [], []
+    end
+
     graph_circles_index = reduce(vcat,tmp)
     unique!(graph_circles_index)
     graph_circles = circles[graph_circles_index]
@@ -150,8 +155,8 @@ function form_polygons_graph(circles, intersections)
 
     # for every circle -> edge between all intersecting circles and all contour points
     for i in 1:length(graph_circles)
+        # add edge between circle and points
         points = intersections[graph_circles[i].Points]
-
         intersect!(points, contour_points)
 
         index = Vector{Int}()
@@ -167,12 +172,7 @@ function form_polygons_graph(circles, intersections)
             add_edge!(g, i+length(contour_points), j)
         end
 
-        index2 = []
-
-
         my_circles = circles[graph_circles[i].Circles]
-
-        intersect!(my_circles,graph_circles)
 
         index2 = Vector{Int}()
         for c in my_circles
@@ -184,6 +184,9 @@ function form_polygons_graph(circles, intersections)
         end
 
         for j in index2
+            if has_edge(g, i+length(contour_points), j+length(contour_points))
+                continue
+            end
             add_edge!(g, i+length(contour_points), j+length(contour_points))
         end
     end
