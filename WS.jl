@@ -48,8 +48,8 @@ cons_ext = [cons1,cons2]
 cons_prog = []
 
 # Position optimization
-#MADS_problem = Position_Optimization.define_problem(z, obj, cons_ext, cons_prog, N_iter)
-#MADS_output = Position_Optimization.optimize(MADS_problem)
+MADS_problem = Position_Optimization.define_problem(z, obj, cons_ext, cons_prog, N_iter)
+MADS_output = Position_Optimization.optimize(MADS_problem)
 #MADS_output = Position_Optimization.check_local_minima(MADS_output, obj, cons_ext, cons_prog, N_iter)
 
 #z = MADS_output
@@ -91,5 +91,5 @@ using Graphs, GraphRecipes
 label = [i for i in 1:nv(g)]
 
 if ne(f) > 0
-    graphplot(g, curves=false, names=label, nodesize=0.25, nodeshape=:hexagon)
+    graphplot(f, curves=false, names=label, nodesize=0.25, nodeshape=:hexagon)
 end

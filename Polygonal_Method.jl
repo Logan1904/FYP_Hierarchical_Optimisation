@@ -291,8 +291,10 @@ function form_polygons(circles, intersections, contour)
         push!(polygon,[ind[i][2]+length(circles),ind_circles[i][1],ind_circles[i][2]])
     end
 
-    ind = reduce(vcat,ind)
-    ind_circles = reduce(vcat,ind_circles)
+    if length(ind) > 0
+        ind = reduce(vcat,ind)
+        ind_circles = reduce(vcat,ind_circles)
+    end
 
     # edges between each point and its 2 circles
     for i in 1:length(intersections)
@@ -305,7 +307,15 @@ function form_polygons(circles, intersections, contour)
 
         add_edge!(g,i+length(circles),A)
         add_edge!(g,i+length(circles),B)
-        add_edge!(g,A,B)
+    end
+
+    # edges between each circle and every intersecting circle
+    for i in 1:length(circles)
+        A = circles[i].Circles
+
+        for j in A
+            add_edge!(g,i,j)
+        end
     end
 
     f = copy(g)
@@ -314,7 +324,7 @@ function form_polygons(circles, intersections, contour)
     while dirty
         dirty = false
 
-        for i in 1:length(nodes)
+        for i in length(circles)+1:length(nodes)
 
             d = degree(g,i)
 
@@ -335,7 +345,20 @@ function form_polygons(circles, intersections, contour)
 
     end
 
+    
     polygon = [nodes[i] for i in polygon]
+
+    loops = cycle_basis(g)
+
+    for i in 1:length(loops)
+        array = nodes[loops[i]]
+        mean_x = sum([point.x for point in array]) / length(array)
+        mean_y = sum([point.y for point in array]) / length(array)
+
+        #Functions.sort_acw!(array,mean_x,mean_y)
+
+        push!(polygon,array)
+    end
 
     return g, f, polygon, nodes
 
