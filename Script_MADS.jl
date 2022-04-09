@@ -33,12 +33,12 @@ objective(z) = Polygonal_Method.Area(z)
 
 # Define objective
 function obj(z)
-    try
-        global Area = objective(z)
-    catch e
-        global Area = 0.0
-    end
-    return -Area
+    Area = Polygonal_Method.Area(z)
+    Distance = sqrt(sum((MADS_input - z).^2))
+    
+    println("Area = ",Area,", Distance = ",Distance,", Sum Minimized = ",-Area+Distance)
+
+    return -Area + Distance
 end
 
 # Define extreme and progressive constraints
@@ -49,7 +49,6 @@ cons_prog = []
 # Position optimization
 MADS_problem = Position_Optimization.define_problem(MADS_input, obj, cons_ext, cons_prog, N_iter)
 MADS_output = Position_Optimization.optimize(MADS_problem)
-MADS_output = Position_Optimization.check_local_minima(MADS_output, obj, cons_ext, cons_prog, N_iter)
 
 # Print areas and plot images
 println("First iteration: ",objective(MADS_input))
