@@ -153,7 +153,6 @@ function intersection(A::Circle,B::Circle)
     if d > A.R + B.R                        # non-intersecting
         return nothing
     elseif d <= abs(A.R - B.R)              # one circle within another
-        contained(A,B)
         return nothing
     else
         a = (d^2+A.R^2-B.R^2)/(2*d)
@@ -167,7 +166,7 @@ function intersection(A::Circle,B::Circle)
         x2 = varx - h*(B.y-A.y)/d
         y2 = vary + h*(B.x-A.x)/d
 
-        if distance(x1,y1,x2,y2) < 0.25     # tangent circles -> we take it as non-intersecting
+        if distance(x1,y1,x2,y2) < 0.50     # tangent circles -> we take it as non-intersecting
             return nothing
         end
 
@@ -221,8 +220,6 @@ end
 Sorts a Vector of Points relative to a Circle in ascending order of polar angle
 """
 function sort_asc_angle!(A::Circle, Array::Vector{Point})
-    N = Int(length(Array))
-
     mean_x = A.x
     mean_y = A.y
 

@@ -47,7 +47,7 @@ function collide(X, sphere_constraint)
     return sphere_constraint, false
 end
 
-function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt)
+function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt, u0)
     N_drones = length(x_initial)
 
     model = Quadrotor(mass=mass, J=J, gravity=gravity, motor_dist=motor_dist, kf=kf, km=km)
@@ -66,27 +66,30 @@ function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, 
         # objective
         Q = Diagonal(@SVector fill(0.1, n))
         R = Diagonal(@SVector fill(0.1, m))
-        Qf = Diagonal(@SVector fill(100.0, n))
+        Qf = Diagonal(@SVector fill(1000.0, n))
         objective = LQRObjective(Q,R,Qf,xf,Nt)
 
         # constraints
         cons = ConstraintList(n,m,Nt)
+
         u_min = zeros(4)
-        u_max = fill(1.0,4)
-        add_constraint!(cons, BoundConstraint(n,m, u_min=u_min, u_max=u_max), 1:Nt-1)
-        
+        u_max = fill(5.0,4)
+        x_min = [-10.0,-10.0,0.0,-1.0,-1.0,-1.0,-1.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0]
+        x_max = [60.0,60.0,15.0,1.0,1.0,1.0,1.0,5.0,5.0,5.0,5.0,5.0,5.0]
+
+        add_constraint!(cons, BoundConstraint(n,m, x_min=x_min, x_max=x_max), 1:Nt-1)
+        #add_constraint!(cons, NormConstraint(n,m,5,Equality(),:control), 1:Nt-1)
+
         # problem
         prob = Problem(model, objective, xf, tf, x0=x0, constraints=cons)
-
-        opts = SolverOptions(
-            cost_tolerance_intermediate=1.0,
-            penalty_scaling=5.,
-            penalty_initial=1.0
-        )
-
-        altro = ALTROSolver(prob, opts)
-        solve!(altro);
         
+        initial_controls!(prob, u0)
+        initial_states!(prob,)
+
+
+        altro = ALTROSolver(prob)
+        solve!(altro);
+
         # Store states
         for k in 1:Nt
             X[i,:,k] = states(altro)[k]

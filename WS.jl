@@ -5,7 +5,7 @@ import Plotter
 import Functions
 
 # Parameters
-N_drones = 6
+N_drones = 10
 domain_x = 50
 domain_y = 50
 R_lim = 10
@@ -54,7 +54,6 @@ cons_prog = []
 
 #z = MADS_output
 
-
 # Print areas and plot images
 a = Polygonal_Method.Area(z)
 b = MonteCarlo_Method.Area(z,100000)
@@ -63,16 +62,34 @@ println("MonteCarlo: ",b)
 println("Error: ",abs(a-b))
 
 circles = Functions.make_circles(z)
+
+Plotter.plot_all(circles, [], [], [], [domain_x,domain_y], "debug")
+
 Polygonal_Method.check_coincident!(circles)
+
+circles = Polygonal_Method.check_contained!(circles)
+
+Polygonal_Method.check_partially_contained!(circles)
+
+Plotter.plot_all(circles, [], [], [], [domain_x,domain_y], "debug2")
+
 intersections = Polygonal_Method.intersection_points(circles)
+
 Polygonal_Method.boundary_ID!(circles,intersections)
-polygons, g, poly = Polygonal_Method.form_polygons_graph(circles,intersections)
+
+intersections = Polygonal_Method.form_contour_points!(circles,intersections)
+
 contour = Polygonal_Method.form_contour(circles)
+
 sectors = Polygonal_Method.form_sectors(circles,intersections,contour)
+
+g, f, polygons, nodes = Polygonal_Method.form_polygons(circles,intersections,contour)
+
+Plotter.plot_all(circles, intersections, polygons, sectors, [domain_x,domain_y], "debug3")
 
 using Graphs, GraphRecipes
 label = [i for i in 1:nv(g)]
-graphplot(g, curves=false, names=label, nodesize=0.25, nodeshape=:hexagon)
 
-
-Plotter.plot_all(circles, intersections, polygons, sectors, [domain_x,domain_y], "debug")
+if ne(f) > 0
+    graphplot(g, curves=false, names=label, nodesize=0.25, nodeshape=:hexagon)
+end

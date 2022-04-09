@@ -6,14 +6,25 @@ using Graphs
 
 function Area(Arr; return_objects::Bool=false, return_graph::Bool=false)
     circles = Functions.make_circles(Arr)
-    check_coincident!(circles)                              #check if any circles are coincident
-    intersections = intersection_points(circles)            #get intersection points for all circles
-    boundary_ID!(circles,intersections)                     #obtain boundary ID -> 1: on outer contour, 0: contained inside contour
-    polygons, f, poly = form_polygons_graph(circles,intersections)         #form polygons
-    #sort_polygon_acw!(circles,polygons)                     #sort polygons acw
-    contour = form_contour(circles)                         #form contour
-    sectors = form_sectors(circles,intersections,contour)   #form sectors
 
+    Polygonal_Method.check_coincident!(circles)
+    
+    circles = Polygonal_Method.check_contained!(circles)
+    
+    Polygonal_Method.check_partially_contained!(circles)
+    
+    intersections = Polygonal_Method.intersection_points(circles)
+    
+    Polygonal_Method.boundary_ID!(circles,intersections)
+    
+    intersections = Polygonal_Method.form_contour_points!(circles,intersections)
+    
+    contour = Polygonal_Method.form_contour(circles)
+    
+    sectors = Polygonal_Method.form_sectors(circles,intersections,contour)
+    
+    g, f, polygons, nodes = Polygonal_Method.form_polygons(circles,intersections,contour)
+    
     area = 0
     for i in 1:length(polygons)                             #obtain area of polygons
         var = Functions.shoelace(polygons[i])
@@ -56,32 +67,96 @@ function check_coincident!(circles::Vector{Functions.Circle})
     end
 end
 
-function intersection_points(circles::Vector{Functions.Circle})
-    N = Int(length(circles))
+function check_contained!(circles::Vector{Functions.Circle})
 
+    for i in 1:length(circles)
+        for j in i+1:length(circles)
+            Functions.contained(circles[i],circles[j])
+        end
+    end
+
+    new_circles = [i for i in circles if i.Contained == false]
+
+    return new_circles
+end
+
+function check_partially_contained!(circles::Vector{Functions.Circle})
+
+    dirty = true
+    while dirty
+
+        for i in 1:length(circles)
+            points = Vector{Functions.Point}()
+
+            for j in 1:length(circles)
+                coords = Functions.intersection(circles[i],circles[j])
+
+                if isnothing(coords) == false
+
+                    x1,y1,x2,y2 = coords
+
+                    P1 = Functions.Point(x1,y1,[i,j],1)
+                    P2 = Functions.Point(x2,y2,[i,j],1)
+
+                    push!(points,P1,P2)
+                end
+            end
+
+            point_ID = ones(Bool, length(points))
+            for k in 1:length(points)
+                P = points[k]
+
+                for l in 1:length(circles)
+
+                    ID = Functions.boundary(circles[l],P)
+
+                    if ID == false
+                        point_ID[k] = false
+                        break
+                    end
+                end
+                
+            end
+
+            if all(!,point_ID) && length(points) > 0
+                deleteat!(circles,i)
+                dirty = true
+                break
+            end
+
+            dirty = false
+        end
+    end
+end
+
+function intersection_points(circles::Vector{Functions.Circle})
     intersections = Vector{Functions.Point}()
-    for i in 1:N
-        for j in i+1:N
+    for i in 1:length(circles)
+
+        for j in i+1:length(circles)
+            A = circles[i]
+            B = circles[j]
+
             coords = Functions.intersection(circles[i],circles[j])
 
             if isnothing(coords) == false
+
                 x1,y1,x2,y2 = coords
-                A = circles[i]
-                B = circles[j]
 
                 P1 = Functions.Point(x1,y1,[i,j],1)
                 P2 = Functions.Point(x2,y2,[i,j],1)
-                push!(intersections,P1)
-                push!(intersections,P2)
+
+                push!(intersections,P1,P2)
 
                 dum = Int(length(intersections))
+
                 push!(A.Points,dum-1,dum)
                 push!(B.Points,dum-1,dum)
-
+                
                 push!(A.Circles,j)
                 push!(B.Circles,i)
+                
             end
-
         end
     end
 
@@ -108,219 +183,21 @@ function boundary_ID!(circles::Vector{Functions.Circle},intersections::Vector{Fu
     end
 end
 
-function form_polygons_graph(circles, intersections)
-    contour_points = [point for point in intersections if point.ID == 1]
+function form_contour_points!(circles, intersections)
 
-    dirty = true
-    while dirty
-        dirty = false
-        super_break = false
-        for i in 1:length(contour_points)
-            for j in i+1:length(contour_points)
-                point1 = contour_points[i]
-                point2 = contour_points[j]
-    
-                if isapprox(point1.x,point2.x,atol=0.1) && isapprox(point1.y,point2.y,atol=0.1)
-                    deleteat!(contour_points, [i,j])
-                    new_circles = unique(vcat(point1.Circles, point2.Circles))
-                    new_point = Functions.Point(point1.x, point1.y, new_circles, 1)
-                    push!(contour_points, new_point)
-                    dirty = true
-                    super_break = true
-                    break
-                end
-            end
-    
-            if super_break
-                break
-            end
-    
+    contour_points = [point for point in intersections if point.ID==1]
+
+    for i in 1:size(circles)[1]
+        circles[i].Points = []
+    end
+
+    for i in 1:size(contour_points)[1]
+        for j in contour_points[i].Circles
+            push!(circles[j].Points,i)
         end
     end
 
-    tmp = [point.Circles for point in contour_points]
-
-    if size(tmp)[1] == 0
-        return [], [], []
-    end
-
-    graph_circles_index = reduce(vcat,tmp)
-    unique!(graph_circles_index)
-    graph_circles = circles[graph_circles_index]
-    
-    # our vector of nodes
-    nodes = vcat(contour_points, graph_circles)
-    
-    g =SimpleGraph(length(nodes))
-
-    # for every circle -> edge between all intersecting circles and all contour points
-    for i in 1:length(graph_circles)
-        # add edge between circle and points
-        points = intersections[graph_circles[i].Points]
-        intersect!(points, contour_points)
-
-        index = Vector{Int}()
-        for p in points
-            dum = findall(x -> x == p, contour_points)
-
-            if length(dum) != 0
-                push!(index,dum[1]) 
-            end
-        end
-
-        for j in index
-            add_edge!(g, i+length(contour_points), j)
-        end
-
-        my_circles = circles[graph_circles[i].Circles]
-
-        index2 = Vector{Int}()
-        for c in my_circles
-            dum = findall(x -> x == c, graph_circles)
-
-            if length(dum) != 0
-                push!(index2,dum[1])
-            end
-        end
-
-        for j in index2
-            if has_edge(g, i+length(contour_points), j+length(contour_points))
-                continue
-            end
-            add_edge!(g, i+length(contour_points), j+length(contour_points))
-        end
-    end
-
-    f = copy(g)
-
-    poly=[]
-    dirty = true
-    while dirty
-        dirty = false
-        for i in 1:length(contour_points)
-            d = degree(g,i)
-
-            if d == 2
-                n1,n2 = neighbors(g,i)
-                if has_edge(g,n1,n2) == true
-                    push!(poly,[i,n1,n2])
-                    rem_edge!(g,i,n1)
-                    rem_edge!(g,i,n2)
-                    dirty = true
-                    break
-                end
-            end
-        end
-    end
-
-    polygons = [nodes[i] for i in poly]
-
-    return polygons, f, poly
-end
-
-function form_polygons(circles::Vector{Functions.Circle},intersections::Vector{Functions.Point})
-    N = Int(length(circles))
-
-    polygon = Vector{Any}()
-    big_polygon = Vector{Any}()
-    for i in 1:N
-        for j in i+1:N
-            A = circles[i]
-            B = circles[j]
-
-            # if either circle is completely within another circle, ignore
-            if A.Contained == 1 || B.Contained == 1
-                continue
-            end
-
-            # obtain indices of shared points between 2 circles
-            shared_points_index = intersect(A.Points, B.Points)
-            
-            # now obtain shared points between 2 circles only if the point is on contour boundary
-            shared_points = [intersections[k] for k in shared_points_index if intersections[k].ID == 1]
-
-            if length(shared_points) == 0                                       # no shared contour points
-                continue
-        elseif length(shared_points) == 2                                       # 2 shared contour points -> a 4 sided polygon
-                push!(polygon, [A, B, shared_points[1], shared_points[2]])
-        elseif length(shared_points) == 1                                       # 1 shared contour point -> part of a bigger >4 sided polygon
-                push!(big_polygon, [[A, B], shared_points[1]])
-            end
-            
-        end
-    end
-
-    # form big polygon points
-    if size(big_polygon)[1] != 0
-
-        big_polygon = Functions.associate2(big_polygon)
-
-        #unpack and form unique points of big polygon
-        for i in 1:size(big_polygon)[1]
-            storage = [] 
-            for j in 1:size(big_polygon[i])[1]
-                A,B = big_polygon[i][j][1]
-                point = big_polygon[i][j][2]
-                push!(storage,A,B,point)
-            end
-
-            storage = unique(storage)
-
-            push!(polygon,storage)
-        end
-    end
-
-    return polygon
-end
-
-function sort_polygon_acw!(circles,polygon)
-    for i in 1:length(polygon)
-        if size(polygon[i])[1] == 4                                                             # for 4 sided polygon, sort acw with centre as the average of the 2 circular centres
-            dummy = [point for point in polygon[i] if isa(point,Functions.Circle) == true]
-            mean_x = sum([point.x for point in dummy])/2
-            mean_y = sum([point.y for point in dummy])/2
-
-            Functions.sort_acw!(polygon[i],mean_x,mean_y)
-        else                                                                                    # for >4 sided polygon, sort acw/cw by jumping between points and seeing which circle is shared
-
-            if typeof(polygon[i][1]) == Functions.Circle
-                polygon[i] = circshift(polygon[i],1)
-            end
-
-            dummy = []
-            A = [point for point in polygon[i] if typeof(point)==Functions.Point]
-
-            push!(dummy,A[1])
-            splice!(A,1)
-
-            while size(A)[1] != 0
-                for j in range(1,stop=size(A)[1])
-                    point = A[j]
-                    prev_point = last(dummy)
-
-                    point_circles = circles[point.Circles]
-                    prev_point_circles = circles[prev_point.Circles]
-
-                    common_circle = intersect(point_circles,prev_point_circles)
-
-                    if size(common_circle)[1] != 0
-                        push!(dummy,common_circle[1])
-                        push!(dummy,point)
-                        splice!(A,j)
-                        break
-                    end
-                end
-            end
-
-            first_point_circles = circles[dummy[1].Circles]
-            last_point_circles = circles[last(dummy).Circles]
-
-            common_circle = intersect(first_point_circles,last_point_circles)
-
-            push!(dummy,common_circle[1])
-            polygon[i] = dummy
-        end
-    end
+    return contour_points
 end
 
 function form_contour(circles)# form circle associations
@@ -352,8 +229,7 @@ function form_sectors(circles,intersections,contour)# form circular sectors
 
         for j in range(1,stop=size(contour[i])[1]) # obtain circular sectors for each circle 
             circle = contour[i][j]
-            index = circle.Points
-            boundary_points = [intersections[x] for x in index if intersections[x].ID == 1]
+            boundary_points = intersections[circle.Points]
 
             Functions.sort_asc_angle!(circle,boundary_points)
             theta = [mod(atan(point.y-circle.y,point.x-circle.x),2*pi) for point in boundary_points]
@@ -386,6 +262,83 @@ function form_sectors(circles,intersections,contour)# form circular sectors
     end
 
     return sectors
+end
+
+function form_polygons(circles, intersections, contour)
+
+    polygon = []
+
+    nodes = vcat(circles,intersections)
+    g =SimpleGraph(length(nodes))
+
+    ind = []
+    ind_circles = []
+    # if 2 points have the same circles -> simple polygon
+    for i in 1:length(intersections)
+        for j in i+1:length(intersections)
+            P1 = intersections[i]
+            P2 = intersections[j]
+
+            if P1.Circles == P2.Circles
+                push!(ind,[i,j])
+                push!(ind_circles,P1.Circles)
+            end
+        end
+    end
+
+    for i in 1:length(ind)
+        push!(polygon,[ind[i][1]+length(circles),ind_circles[i][1],ind_circles[i][2]])
+        push!(polygon,[ind[i][2]+length(circles),ind_circles[i][1],ind_circles[i][2]])
+    end
+
+    ind = reduce(vcat,ind)
+    ind_circles = reduce(vcat,ind_circles)
+
+    # edges between each point and its 2 circles
+    for i in 1:length(intersections)
+
+        if i in ind
+            continue
+        end
+
+        A,B = intersections[i].Circles
+
+        add_edge!(g,i+length(circles),A)
+        add_edge!(g,i+length(circles),B)
+        add_edge!(g,A,B)
+    end
+
+    f = copy(g)
+
+    dirty = true
+    while dirty
+        dirty = false
+
+        for i in 1:length(nodes)
+
+            d = degree(g,i)
+
+            if d == 2
+                n1,n2 = neighbors(g,i)
+
+                if has_edge(g,n1,n2) == true
+                    push!(polygon,[i,n1,n2])
+                    rem_edge!(g,i,n1)
+                    rem_edge!(g,i,n2)
+                    dirty = true
+                    break
+                end
+
+            end
+
+        end
+
+    end
+
+    polygon = [nodes[i] for i in polygon]
+
+    return g, f, polygon, nodes
+
 end
 
 end #module end

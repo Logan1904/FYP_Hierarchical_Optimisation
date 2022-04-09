@@ -26,7 +26,7 @@ function plot_all(circles, intersections, polygons, sectors, domain, string)
     for i in range(1,stop=length(intersections))
         point = intersections[i]
         if point.ID == 1
-            color = "white"
+            color = "red"
             plot!([point.x],[point.y], seriestype=:scatter, label="", color=color)
         end
 

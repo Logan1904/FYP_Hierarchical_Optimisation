@@ -1,13 +1,26 @@
-import Trajectory_Optimization
+#import Trajectory_Optimization
 using StaticArrays, Rotations, LinearAlgebra
+using RobotZoo: Quadrotor, RobotDynamics
 
 # Drone Parameters
-mass = 0.5                                       # mass of quadrotor
+mass = 0.4                                       # mass of quadrotor
 J = Diagonal(@SVector[0.0023, 0.0023, 0.004])    # inertia matrix
 gravity = SVector(0,0,-3.721)                    # gravity vector
 motor_dist = 0.1750                              # distance between motors
 kf = 1.0                                         # motor force constant (motor force = kf*u)
 km = 0.0245                                      # motor torque constant (motor torque = km*u)
+
+MADS_input = 
+[1.0,
+1.0,
+1.0]
+
+MADS_output = 
+[40.0,
+40.0,
+10.0]
+
+N_drones = 1
 
 # Obtain initial and final states for all drones
 x_initial = Trajectory_Optimization.MADS_to_ALTRO(MADS_input)
@@ -24,15 +37,18 @@ U = zeros(Float64, (N_drones, 4, 0))
 
 # MPC optimization
 tf = 15.0           # Total time
-hor = 1.0           # Prediction horizon length
-dt = 0.05           # Time-step length per horizon
+hor = 2.0          # Prediction horizon length
+dt = 0.1          # Time-step length per horizon
 Nt = Int(hor/dt)+1  # Number of timesteps per horizon
+
+model = Quadrotor(mass=mass, J=J, gravity=gravity, motor_dist=motor_dist, kf=kf, km=km)
+u0 = zeros(model)[2]
 
 time = 0.0
 while time < tf
 
-    x,u = Trajectory_Optimization.optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, hor, Nt)
-    
+    x,u = Trajectory_Optimization.optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, hor, Nt, u0)
+
     # update x_initial to first timestep
     for i in 1:N_drones
         global x_initial[i] = x[i,:,2]
@@ -42,7 +58,8 @@ while time < tf
     global X = cat(X,x[:,:,2],dims=3)
     global U = cat(U,u[:,:,2],dims=3)
 
-    global time += 1*dt
+    global time = round(time + 1*dt, digits=3)
+    println(time)
 end
 
 
