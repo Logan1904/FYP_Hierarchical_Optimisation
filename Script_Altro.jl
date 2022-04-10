@@ -10,48 +10,42 @@ motor_dist = 0.1750                              # distance between motors
 kf = 1.0                                         # motor force constant (motor force = kf*u)
 km = 0.0245                                      # motor torque constant (motor torque = km*u)
 
-MADS_input = 
-[1.0,
-1.0,
-1.0]
+MADS_input = [0.0,50.0,
+10.0,10.0,
+5.0,5.0]
 
-MADS_output = 
-[40.0,
-40.0,
-10.0]
+MADS_output = [50.0,0.0,
+10.0,10.0,
+5.0,5.0]
 
-N_drones = 1
+N_drones = 2
 
 # Obtain initial and final states for all drones
-x_initial = Trajectory_Optimization.MADS_to_ALTRO(MADS_input)
+x_start = Trajectory_Optimization.MADS_to_ALTRO(MADS_input)
 x_final = Trajectory_Optimization.MADS_to_ALTRO(MADS_output)
 
 # Initialise state and control history matrices
 X = zeros(Float64, (N_drones, 13, 1))
+U = zeros(Float64, (N_drones, 4, 0))
 
 for i in 1:N_drones
-    X[i,:,1] = x_initial[i]
+    X[i,:,1] = x_start[i]
 end
-
-U = zeros(Float64, (N_drones, 4, 0))
 
 # MPC optimization
 tf = 15.0           # Total time
-hor = 2.0          # Prediction horizon length
+hor = 1.0          # Prediction horizon length
 dt = 0.1          # Time-step length per horizon
 Nt = Int(hor/dt)+1  # Number of timesteps per horizon
 
-model = Quadrotor(mass=mass, J=J, gravity=gravity, motor_dist=motor_dist, kf=kf, km=km)
-u0 = zeros(model)[2]
-
 time = 0.0
+s = []
 while time < tf
 
-    x,u = Trajectory_Optimization.optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, hor, Nt, u0)
-
-    # update x_initial to first timestep
+    x,u = Trajectory_Optimization.optimize(mass, J, gravity, motor_dist, kf, km, x_start, x_final, hor, Nt)
+    # update x_start to first timestep
     for i in 1:N_drones
-        global x_initial[i] = x[i,:,2]
+        global x_start[i] = x[i,:,2]
     end
 
     # store state and control

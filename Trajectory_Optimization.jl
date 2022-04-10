@@ -47,7 +47,7 @@ function collide(X, sphere_constraint)
     return sphere_constraint, false
 end
 
-function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt, u0)
+function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt)
     N_drones = length(x_initial)
 
     model = Quadrotor(mass=mass, J=J, gravity=gravity, motor_dist=motor_dist, kf=kf, km=km)
@@ -64,9 +64,9 @@ function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, 
         xf = SVector{13, Float64}(x_final[i])
 
         # objective
-        Q = Diagonal(@SVector fill(0.1, n))
-        R = Diagonal(@SVector fill(0.1, m))
-        Qf = Diagonal(@SVector fill(1000.0, n))
+        Q = Diagonal(@SVector fill(100., n))
+        R = Diagonal(@SVector fill(100., m))
+        Qf = Diagonal(@SVector fill(0., n))
         objective = LQRObjective(Q,R,Qf,xf,Nt)
 
         # constraints
@@ -74,21 +74,40 @@ function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, 
 
         u_min = zeros(4)
         u_max = fill(5.0,4)
-        x_min = [-10.0,-10.0,0.0,-1.0,-1.0,-1.0,-1.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0]
-        x_max = [60.0,60.0,15.0,1.0,1.0,1.0,1.0,5.0,5.0,5.0,5.0,5.0,5.0]
+        x_min = [-10.0,-10.0,0.0,-2.0,-2.0,-2.0,-2.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0]
+        x_max = [60.0,60.0,15.0,2.0,2.0,2.0,2.0,5.0,5.0,5.0,5.0,5.0,5.0]
 
         add_constraint!(cons, BoundConstraint(n,m, x_min=x_min, x_max=x_max), 1:Nt-1)
+        #add_constraint!(cons, GoalConstraint(xf), Nt)
         #add_constraint!(cons, NormConstraint(n,m,5,Equality(),:control), 1:Nt-1)
 
         # problem
         prob = Problem(model, objective, xf, tf, x0=x0, constraints=cons)
+
+        # initialization
+        # State initialization: linear trajectory from start to end
+        # Control initialization: hover
+        X0 = zeros(Float64, (n,Nt))
+        U0 = zeros(Float64, (m,Nt-1))
+
+        hover = zeros(model)[2]
+
+        for i in 1:Nt-1
+            X0[:,i] = x0 + (xf-x0)*(i-1)/(Nt-1)
+            U0[:,i] = hover
+        end
+
+        X0[:,Nt] = xf
+
+        initial_states!(prob, X0)
+        initial_controls!(prob, U0)
         
-        initial_controls!(prob, u0)
-        initial_states!(prob,)
-
-
         altro = ALTROSolver(prob)
+        set_options!(altro, max_cost_value = 1e30, penalty_initial=100)
+
         solve!(altro);
+
+        global stats = altro.stats
 
         # Store states
         for k in 1:Nt
@@ -100,7 +119,7 @@ function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, 
         end
     end
 
-    return X, U
+    return X, U, stats
 
 end
 
