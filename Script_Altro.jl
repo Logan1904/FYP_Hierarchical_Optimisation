@@ -11,11 +11,11 @@ kf = 1.0                                         # motor force constant (motor f
 km = 0.0245                                      # motor torque constant (motor torque = km*u)
 
 MADS_input = [0.0,50.0,
-10.0,10.0,
+0.0,50.0,
 5.0,5.0]
 
 MADS_output = [50.0,0.0,
-10.0,10.0,
+50.0,0.0,
 5.0,5.0]
 
 N_drones = 2
@@ -39,10 +39,17 @@ dt = 0.1          # Time-step length per horizon
 Nt = Int(hor/dt)+1  # Number of timesteps per horizon
 
 time = 0.0
-s = []
+
+collision = Vector{Any}(undef,N_drones)
+
+for i in 1:N_drones
+    collision[i] = [false,[]]
+end
+
 while time < tf
 
-    x,u = Trajectory_Optimization.optimize(mass, J, gravity, motor_dist, kf, km, x_start, x_final, hor, Nt)
+    x,u = Trajectory_Optimization.optimize(mass, J, gravity, motor_dist, kf, km, x_start, x_final, hor, Nt, collision)
+
     # update x_start to first timestep
     for i in 1:N_drones
         global x_start[i] = x[i,:,2]
@@ -52,8 +59,35 @@ while time < tf
     global X = cat(X,x[:,:,2],dims=3)
     global U = cat(U,u[:,:,2],dims=3)
 
+    global collision = Vector{Any}(undef,N_drones)
+
+    for i in 1:N_drones
+        for j in i+1:N_drones
+            a,b,c = Trajectory_Optimization.collide(x,i,j)
+            collision[i] = [a,c]
+            collision[j] = [a,b]
+        end
+    end
+
     global time = round(time + 1*dt, digits=3)
     println(time)
+end
+
+# Check for collision
+for i in 1:N_drones
+    for j in i+1:N_drones
+        for k in 1:151
+            x1,y1,z1 = X[i,1:3,k]
+            x2,y2,z2 = X[j,1:3,k]
+
+            distance = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2-z1)^2)
+            
+            if distance < 1.0
+                println("COLLISION at k = ",k)
+            end
+
+        end
+    end
 end
 
 

@@ -26,28 +26,26 @@ function MADS_to_ALTRO(z)
 end
 
 # Collision Avoidance
-function collide(X, sphere_constraint)
-    for i in 1:size(X)[1]
-        for j in i+1:size(X)[1]
-            for k in 1:size(X)[3]
-                x1,y1,z1 = X[i,1:3,k]
-                x2,y2,z2 = X[j,1:3,k]
+function collide(x,i,j)
+    
+    for k in 3:size(x)[3]
+        x1,y1,z1 = x[i,1:3,k]
+        x2,y2,z2 = x[j,1:3,k]
 
-                distance = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2-z1)^2)
-                
-                if distance < 2
-                    #println("Drone ",i," and Drone ",j," collide at timestep ",k)
-                    push!(sphere_constraint, [i, x2, y2, z2]) # constraint on drone 1 at location of drone 2
-                    return sphere_constraint, true
-                end
+        distance = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2-z1)^2)
 
-            end
+        if distance < 2.0
+            return true, [x1,y1,z1], [x2,y2,z2]
+            break
         end
+
     end
-    return sphere_constraint, false
+
+    return false, [], []
+
 end
 
-function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt)
+function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt, collision)
     N_drones = length(x_initial)
 
     model = Quadrotor(mass=mass, J=J, gravity=gravity, motor_dist=motor_dist, kf=kf, km=km)
@@ -64,10 +62,16 @@ function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, 
         xf = SVector{13, Float64}(x_final[i])
 
         # objective
-        Q = Diagonal(@SVector fill(100., n))
-        R = Diagonal(@SVector fill(100., m))
-        Qf = Diagonal(@SVector fill(0., n))
-        objective = LQRObjective(Q,R,Qf,xf,Nt)
+        Q = Diagonal(@SVector fill(10., n))
+        R = Diagonal(@SVector fill(10., m))
+        H = @SMatrix zeros(m,n)
+        q = -Q*xf
+        r = @SVector zeros(m)
+        c = xf'*Q*xf/2
+
+        cost1 = QuadraticCost(Q, R, H, q, r, c)
+
+        objective = Objective(cost1, Nt)
 
         # constraints
         cons = ConstraintList(n,m,Nt)
@@ -78,10 +82,12 @@ function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, 
         x_max = [60.0,60.0,15.0,2.0,2.0,2.0,2.0,5.0,5.0,5.0,5.0,5.0,5.0]
 
         add_constraint!(cons, BoundConstraint(n,m, x_min=x_min, x_max=x_max), 1:Nt-1)
-        #add_constraint!(cons, GoalConstraint(xf), Nt)
-        #add_constraint!(cons, NormConstraint(n,m,5,Equality(),:control), 1:Nt-1)
 
-        # problem
+        if collision[i][1] == true
+            x,y,z = collision[i][2]
+            add_constraint!(cons, SphereConstraint(n, [x], [y], [z], [1.5]), 1:Nt)
+        end
+
         prob = Problem(model, objective, xf, tf, x0=x0, constraints=cons)
 
         # initialization
