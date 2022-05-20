@@ -25,10 +25,8 @@ function plot_all(circles, intersections, polygons, sectors, domain, string)
     #plot intersection points
     for i in range(1,stop=length(intersections))
         point = intersections[i]
-        if point.ID == 1
-            color = "red"
-            plot!([point.x],[point.y], seriestype=:scatter, label="", color=color)
-        end
+        color = "blue"
+        plot!([point.x],[point.y], seriestype=:scatter, label="", color=color)
 
         
     end
@@ -41,7 +39,7 @@ function plot_all(circles, intersections, polygons, sectors, domain, string)
         append!(xarr,xarr[1])
         append!(yarr,yarr[1])
 
-        plot!(xarr,yarr,color="blue", label="")
+        plot!(xarr,yarr,color="magenta", label="")
     end
 
     #plot circular sectors

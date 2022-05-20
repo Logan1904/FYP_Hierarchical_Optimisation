@@ -1,4 +1,4 @@
-#import Trajectory_Optimization
+import Trajectory_Optimization
 using StaticArrays, Rotations, LinearAlgebra
 using RobotZoo: Quadrotor, RobotDynamics
 
@@ -10,15 +10,15 @@ motor_dist = 0.1750                              # distance between motors
 kf = 1.0                                         # motor force constant (motor force = kf*u)
 km = 0.0245                                      # motor torque constant (motor torque = km*u)
 
-MADS_input = [0.0,50.0,
-0.0,50.0,
-5.0,5.0]
+MADS_input = [0.0,50.0,0.0,50.0,
+0.0,50.0,50.0,0.0,
+5.0,5.0,5.0,5.0]
 
-MADS_output = [50.0,0.0,
-50.0,0.0,
-5.0,5.0]
+MADS_output = [50.0,0.0,50.0,0.0,
+50.0,0.0,0.0,50.0,
+5.0,5.0,5.0,5.0]
 
-N_drones = 2
+N_drones = 4
 
 # Obtain initial and final states for all drones
 x_start = Trajectory_Optimization.MADS_to_ALTRO(MADS_input)
@@ -83,7 +83,7 @@ for i in 1:N_drones
             distance = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2-z1)^2)
             
             if distance < 1.0
-                println("COLLISION at k = ",k)
+                println("Collision between drone ",i," and drone ",j, " at t = ",k*0.1)
             end
 
         end

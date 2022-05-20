@@ -289,6 +289,12 @@ function form_polygons(circles, intersections, contour)
     for i in 1:length(ind)
         push!(polygon,[ind[i][1]+length(circles),ind_circles[i][1],ind_circles[i][2]])
         push!(polygon,[ind[i][2]+length(circles),ind_circles[i][1],ind_circles[i][2]])
+
+        #push!(polygon,[ind[i][1]+length(circles),ind_circles[i][2]])
+        #push!(polygon,[ind[i][1]+length(circles),ind_circles[i][1]])
+        #push!(polygon,[ind[i][2]+length(circles),ind_circles[i][1]])
+        #push!(polygon,[ind[i][2]+length(circles),ind_circles[i][2]])
+
     end
 
     if length(ind) > 0
