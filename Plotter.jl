@@ -5,8 +5,14 @@ export Plot
 using Base_Functions
 using Plots
 
-function Plot(circles, intersections, boundaries, domain, string)
-    p = plot(minorgrid=true, minorgridalpha=0.25)
+function Plot(problem, domain, string)
+
+    circles = problem.circles
+    intersections = problem.intersections
+    boundaries = problem.boundaries
+
+    plot(minorgrid=true, minorgridalpha=0.25)
+
     domain_x,domain_y = domain
 
     # plot circles
