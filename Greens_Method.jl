@@ -113,6 +113,11 @@ function intersection_points(circles::Vector{Circle})
 end
 
 function form_contour(circles)# form circle associations
+
+    if length(circles) == 1
+        return [circles]
+    end
+
     contour = []
     contour_circles = [circ for circ in circles]
     for i in range(1,stop=length(contour_circles))
@@ -233,7 +238,7 @@ function calculateArea(sectors)
                 break
             end
 
-            vec = []
+            vec = Vector{Point}()
 
             for k in 1:length(sectors[i][j])
 
