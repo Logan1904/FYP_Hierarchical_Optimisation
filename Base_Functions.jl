@@ -30,7 +30,6 @@ A circle object
     - 'R::Float64':             Radius
     - 'Points::Vector{Int}':    Vector of intersection point indices
     - 'Circles::Vector{Int}':   Vector of intersection circles indices
-    - 'Contained::Bool':        True if contained by another circle
 
 """
 mutable struct Circle
@@ -39,7 +38,6 @@ mutable struct Circle
     R::Float64
     Points::Vector{Int}
     Circles::Vector{Int}
-    Contained::Bool
 end
 
 """
@@ -79,7 +77,7 @@ function make_circles(arr::Vector{Float64})
         x = arr[i]
         y = arr[N + i]
         R = arr[2*N + i]
-        push!(circles, Circle(x,y,R,[],[],false))
+        push!(circles, Circle(x,y,R,[],[]))
     end
     
     return circles
@@ -158,7 +156,9 @@ end
 """
     contained(A::Circle, B::Circle)
 
-Checks if a Circle is contained by another and modifies the attribute 'Circle.Contained' accordingly
+Checks if A is entirely contained inside B and vice-versa
+
+If A is contained in B, return A. If B is contained in A, return B.
 
 # Arguments:
 
@@ -169,11 +169,12 @@ function contained(A::Circle,B::Circle)
     d = distance(A,B)
     if d <= abs(A.R - B.R)
         if A.R < B.R
-            A.Contained = true
+            return A
         else
-            B.Contained = true
+            return B
         end
     end
+    return
 end
 
 """

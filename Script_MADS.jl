@@ -2,7 +2,7 @@ using Greens_Method
 using Position_Optimization
 
 # Parameters
-N = 8
+N = 10
 domain_x = 50
 domain_y = 50
 R_lim = 7

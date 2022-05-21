@@ -80,13 +80,19 @@ Checks if any Circle objects are contained within one another and removes the co
     - 'circles::Vector{Circle}': Vector of Circle objects
 """
 function checkContained!(circles::Vector{Circle})
+    is_contained = Vector{Bool}([false for i in 1:length(circles)])
+
     for i in 1:length(circles)
         for j in i+1:length(circles)
-            contained(circles[i],circles[j])
+            if contained(circles[i],circles[j]) == circles[i]
+                is_contained[i] = true
+            elseif contained(circles[i],circles[j]) == circles[j]
+                is_contained[j] = true
+            end
         end
     end
 
-    new_circles = [i for i in circles if i.Contained == false]
+    new_circles = [circles[i] for i in 1:length(circles) if is_contained[i] == false]
 
     return new_circles
 end
