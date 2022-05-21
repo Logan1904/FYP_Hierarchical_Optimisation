@@ -13,8 +13,8 @@ The problem is solved by obtaining the outer contours of the circles, and calcul
 Attributes:
     - 'circles::Vector{Circle}':                            A vector of Circle objects describing our problem
     - 'intersections::Vector{Point}':                       A vector of Point objects describing the intersection points ONLY LOCATED ON AN OUTER CONTOUR
-    - 'contour::Vector{Vector{Circle}}':                    A vector of Circle objects, where each inner vector describes the Circle objects that are 'associated' with one another
-    - 'boundary::Vector{Vector{Vector{Vector{Any}}}}':      A vector of vector of vectors describing the outer boundaries
+    - 'contours::Vector{Vector{Circle}}':                    A vector of Circle objects, where each inner vector describes the Circle objects that are 'associated' with one another
+    - 'boundaries::Vector{Vector{Vector{Vector{Any}}}}':      A vector of vector of vectors describing the outer boundaries
     - 'area::Float64':                                      The calculated area
 """
 struct Greens_Problem
@@ -177,7 +177,7 @@ Returns contour::Vector{Vector{Circle}} where each inner vector contains the Cir
 
     - 'circles::Vector{Circle}': Vector of Circle objects
 """
-function getContours(circles)# form circle associations
+function getContours(circles::Vector{Circle})
 
     # if there is just one Circle
     if length(circles) == 1
@@ -185,18 +185,19 @@ function getContours(circles)# form circle associations
     end
 
     # form input format for associate function
-    contours = []
+    tmp = []
     contour_circles = copy(circles)
     for i in range(1,stop=length(contour_circles))
         A = contour_circles[i]
-        push!(contours,[A.Circles,A])
+        push!(tmp,[A.Circles,A])
     end
 
-    contours = associate(contours)
+    tmp = associate(tmp)
 
     # change into vectors of Circles
-    for i in 1:length(contours)
-        contours[i] = [point[2] for point in contours[i]]
+    contours = Vector{Vector{Circle}}()
+    for i in 1:length(tmp)
+        push!(contours,[point[2] for point in tmp[i]])
     end
 
     return contours
@@ -205,17 +206,28 @@ end
 """
     getBoundaries(circles::Vector{Circle}, intersections::Vector{Point}, contours::Vector{Vector{Circle}})
 
+Obtains the boundaries of our problem
 
-Obtains the outer contours of our problem
-
-Returns contour::Vector{Vector{Circle}} where each inner vector contains the Circle objects that make up a contour
+Returns boundaries::Vector{Vector{Vector{Vector{Any}}}}
 
 # Arguments:
 
     - 'circles::Vector{Circle}': Vector of Circle objects
+    - 'intersections::Vector{Point}': Vector of Point objects
+    - 'contours::Vector{Vector{Circle}}': Vector of vector of Circle objects
+
+# Structure of 'boundaries'
+
+Vector{                 # Each row for a contour
+    Vector{             # Each row for a boundary within said contour
+        Vector{         # Each row for a circular arc within said boundary (a boundary is composed of multiple circular arcs)
+            Vector{}    # Contains 5 rows describing a circular arc, of form [Circle,Point1,Point2,theta1,theta2]
+        }
+    }
+}
 """
-function getBoundaries(circles,intersections,contours)
-    boundaries = []
+function getBoundaries(circles::Vector{Circle}, intersections::Vector{Point}, contours::Vector{Vector{Circle}})
+    boundaries = Vector{Vector{Vector{Vector{Any}}}}()
     for i in range(1,stop=size(contours)[1])
         contour_boundaries = []
 
@@ -304,7 +316,16 @@ function getBoundaries(circles,intersections,contours)
     return boundaries
 end
 
-function calculateArea(boundaries)
+"""
+    calculateArea(boundaries::Vector{Vector{Vector{Vector{Any}}}})
+
+Returns the area encompassed by the boundaries
+
+# Arguments:
+
+    - 'boundaries::Vector{Vector{Vector{Vector{Any}}}}': Vector of boundaries
+"""
+function calculateArea(boundaries::Vector{Vector{Vector{Vector{Any}}}})
 
     total_area = 0
 
