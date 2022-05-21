@@ -1,8 +1,7 @@
 module Position_Optimization
 
 using DirectSearch
-import Polygonal_Method
-import Functions
+using Greens_Method
 
 function define_problem(z, obj, cons_ext, cons_prog, N_iter)
     # Define optimization problem

@@ -1,8 +1,9 @@
 module MonteCarlo_Method
-import Functions
+
+using Base_Functions
 
 function Area(arr,N_MC; print::Bool=false)
-    circles = Functions.make_circles(arr)
+    circles = make_circles(arr)
 
     max_x = max([point.x + point.R for point in circles]...)
     max_y = max([point.y + point.R for point in circles]...)
@@ -14,12 +15,12 @@ function Area(arr,N_MC; print::Bool=false)
         point_x = rand(1)[1]*(max_x-min_x)+min_x
         point_y = rand(1)[1]*(max_y-min_y)+min_y
 
-        Point = Functions.Point(point_x,point_y,[],false)
+        P = Point(point_x,point_y,[],false)
 
         for j in range(1,stop=size(circles)[1])
             A = circles[j]
 
-            if !(Functions.outside(A,Point)) #point inside a circle
+            if !(outside(A,P)) #point inside a circle
                 count = count + 1
                 break
             end

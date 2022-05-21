@@ -1,25 +1,16 @@
 module Plotter
-import Functions
+
+export Plot
+
+using Base_Functions
 using Plots
 
-function plot_domain(circles,domain,string)
-    p = plot()
-    domain_x,domain_y = domain
-    
-    # plot circles
-    for i in range(1,stop=length(circles))
-        plot!(Functions.draw(circles[i],0.0,2*pi), aspect_ratio=1, label="", color="black", ylim=(0,domain_y), xlim=(0,domain_x), legend=:outertopright)
-    end
-
-    savefig(string)
-end
-
-function plot_all(circles, intersections, polygons, sectors, domain, string)
+function Plot(circles, intersections, polygons, sectors, domain, string)
     p = plot(minorgrid=true, minorgridalpha=0.25)
     domain_x,domain_y = domain
     #plot circles
     for i in range(1,stop=length(circles))
-        plot!(Functions.draw(circles[i],0.0,2*pi), aspect_ratio=1, label="", color="black", ylim=(0,domain_y), xlim=(0,domain_x), legend=:outertopright)
+        plot!(draw(circles[i],0.0,2*pi), aspect_ratio=1, label="", color="black", ylim=(0,domain_y), xlim=(0,domain_x), legend=:outertopright)
     end
 
     #plot intersection points
@@ -50,7 +41,7 @@ function plot_all(circles, intersections, polygons, sectors, domain, string)
 
             for k in 1:length(sectors[i][j])
 
-                plot!(Functions.draw(sectors[i][j][k][1],sectors[i][j][k][4],sectors[i][j][k][5]), label="", color=shade, linealpha=alpha)
+                plot!(draw(sectors[i][j][k][1],sectors[i][j][k][4],sectors[i][j][k][5]), label="", color=shade, linealpha=alpha)
 
             end
         end
