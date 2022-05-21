@@ -66,7 +66,7 @@ end
 Returns a Vector of Circle objects
 
 Arguments:
-    - 'Arr::{Vector{Float64}}': Vector of x,y coordinates with radii values, in the order [x;y;R]
+    - 'arr::{Vector{Float64}}': Vector of x,y coordinates with radii values, in the order [x;y;R]
 """
 function make_circles(arr::Vector{Float64})
     N = Int(length(arr)/3)
@@ -85,7 +85,12 @@ end
 """
     draw(A::Circle, theta1::Float64, theta2::Float64)
 
-Returns 2 vectors of x and y coordinates corresponding to the Circle
+Returns 2 vectors of discretised x and y coordinates of points on the circle between the angles
+
+Arguments:
+    - 'A::Circle': A Circle object
+    - 'theta1::Float64': First angle
+    - 'theta2::Float64': Second angle
 """
 # returns x and y vectors of a Circle object (for plotting)
 function draw(A::Circle,theta1::Float64,theta2::Float64)
@@ -101,17 +106,12 @@ end
     distance(A::Circle, B::Circle)
 
 Returns the Euclidean distance between 2 Circle centres
+
+Arguments:
+    - 'A::Circle': First Circle object
+    - 'B::Circle': Second Circle object
 """
 function distance(A::Circle,B::Circle)
-    return sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
-end
-
-"""
-    distance(A::Point, B::Point)
-
-Returns the Euclidean distance between 2 Points
-"""
-function distance(A::Point,B::Point)
     return sqrt((A.x-B.x)^2 + (A.y-B.y)^2)
 end
 
@@ -119,6 +119,12 @@ end
     distance(x1::Float64, y1::Float64, x2::Float64, y2::Float64)
 
 Returns the Euclidean distance between the 2 points (x1,y1) and (x2,y2)
+
+Arguments:
+    - 'x1::Float64': x-coordinate of the first point
+    - 'y1::Float64': y-coordinate of the first point
+    - 'x2::Float64': x-coordinate of the second point
+    - 'y2::Float64': y-coordinate of the second point
 """
 function distance(x1::Float64,y1::Float64,x2::Float64,y2::Float64)
     return sqrt((x1-x2)^2 + (y1-y2)^2)
@@ -128,6 +134,10 @@ end
     coincident(A::Circle, B::Circle)
 
 Returns 'true' if the 2 Circles are coincident, 'false' otherwise
+
+Arguments:
+    - 'A::Circle': First Circle object
+    - 'B::Circle': Second Circle object
 """
 function coincident(A::Circle,B::Circle)
     d = round(distance(A,B), digits=1)
@@ -142,6 +152,10 @@ end
     contained(A::Circle, B::Circle)
 
 Checks if a Circle is contained by another and modifies the attribute 'Circle.Contained' accordingly
+
+Arguments:
+    - 'A::Circle': First Circle object
+    - 'B::Circle': Second Circle object
 """
 function contained(A::Circle,B::Circle)
     d = distance(A,B)
@@ -159,7 +173,10 @@ end
 
 Returns the intersection coordinates of 2 Circles, in order 'x1,y1,x2,y2'
 Returns 'nothing' if the 2 Circles do not intersect or are tangent
-Calls 'contained!(A::Circle, B::Circle)' if one Circle is contained by the other Circle
+
+Arguments:
+    - 'A::Circle': First Circle object
+    - 'B::Circle': Second Circle object
 """
 function intersection(A::Circle,B::Circle)
     d = distance(A,B)
@@ -180,7 +197,7 @@ function intersection(A::Circle,B::Circle)
         x2 = varx - h*(B.y-A.y)/d
         y2 = vary + h*(B.x-A.x)/d
 
-        if distance(x1,y1,x2,y2) < 0.50     # tangent circles -> we take it as non-intersecting
+        if isapprox(distance(x1,y1,x2,y2), 0.0, atol=0.01) # tangent circles -> we take it as non-intersecting
             return nothing
         end
 
@@ -192,6 +209,10 @@ end
     boundary(A::Circle, P::Point)
 
 Returns 'true' if Point P is inside Circle A, 'false' otherwise
+
+Arguments:
+    - 'A::Circle': The Circle object
+    - 'P::Point': The Point object
 """
 function outside(A::Circle,P::Point)
     if round((P.x-A.x)^2 + (P.y-A.y)^2 - A.R^2, digits=2) >= 0.0
@@ -204,7 +225,11 @@ end
 """
     sort_asc_angle!(A::Circle, Array::Vector{Point})
 
-Sorts a Vector of Points relative to a Circle in ascending order of polar angle
+Sorts a Vector of Points relative to a Circle (centre) in ascending order of polar angle
+
+Arguments:
+    - 'A::Circle': The Circle object
+    - 'Array::Vector{Point}': The vector of Point objects
 """
 function sort_asc_angle!(A::Circle, Array::Vector{Point})
     mean_x = A.x
@@ -214,14 +239,19 @@ function sort_asc_angle!(A::Circle, Array::Vector{Point})
 end
 
 """
-    sort_acw!(Array::Any, mean_x::Float64, mean_y::Float64)
+    sort_acw!(Array::Any, x::Float64, y::Float64)
 
-Sorts a Vector of Points and/or Circles in anticlockwise order
+Sorts a Vector of Points and/or Circles around the (x,y) coordinates in anticlockwise order
+
+Arguments:
+    - 'Array::Any': A vector of either Circle or Point objects
+    - 'x::Float64': x-coordinate
+    - 'y::Float64': y-coordinate
 """
-function sort_acw!(Array::Any,mean_x::Float64,mean_y::Float64)
+function sort_acw!(Array::Any,x::Float64,y::Float64)
     N = Int(length(Array))
 
-    angles = [mod(atan(point.y-mean_y, point.x-mean_x),2*pi) for point in Array]
+    angles = [mod(atan(point.y-y, point.x-x),2*pi) for point in Array]
     for i in 1:N
         for j in i+1:N
             if angles[j] < angles[i]
@@ -241,21 +271,28 @@ end
     point_on_circle(A::Circle, Theta::Float64)
 
 Returns a Point on a Circle given a polar angle
+
+Arguments:
+    -'A::Circle': The Circle object
+    -theta::Float64': The angle value (rad)
 """
-function point_on_circle(A::Circle,Theta::Float64)
-    x = A.x + A.R*cos(Theta)
-    y = A.y + A.R*sin(Theta)
+function point_on_circle(A::Circle,theta::Float64)
+    x = A.x + A.R*cos(theta)
+    y = A.y + A.R*sin(theta)
     return Point(x,y,[],0)
 end
 
 """
-    shoelace(Points::Any)
+    shoelace(Array::Vector{Point})
 
-Returns the area of a polygon described by a sorted Vector of Points and/or Circles using the Shoelace algorithm
+Returns the area of a polygon described by a sorted Vector of Points using the Shoelace algorithm
+
+Arguments:
+    -Array::Vector{Point}': A vector of Point objects
 """
-function shoelace(Points::Any)
-    xarr = [point.x for point in Points]
-    yarr = [point.y for point in Points]
+function shoelace(Array::Vector{Point})
+    xarr = [point.x for point in Array]
+    yarr = [point.y for point in Array]
 
     dum1 = dot(xarr,circshift(yarr,1))
     dum2 = dot(yarr,circshift(xarr,1))
@@ -265,148 +302,81 @@ function shoelace(Points::Any)
     return area
 end
 
+"""
+    associate(Array::Vector{Any})
 
-# Vector: Any length vector, with each row of form [[Association_Object(s)], Any_Other_Objects]
-# Returns a vector, with each row containing rows in the original Vector that have links between the Association Objects
-function associate(Vector)
+Returns a vector, with each row containing rows in Array that have links between the Association_Object(s)
+
+Arguments:
+    'Array::Vector{Any}': A vector with each row of the form [[Association_Object(s)], Link_Object]
+    
+Example:
+
+Input = [
+    [[1,2,3],A],
+    [[2,4,6],B],
+    [[6,7,8],C],
+    [[10,11,12],D],
+    [[12,24,36],E]
+]
+
+Output = [
+    [[[1,2,3],A], [[2,4,6],B], [[6,7,8],C]],
+    [[[10,11,12],D], [[12,24,36],E]]
+]
+
+Explanation:
+[1,2,3] is 'associated' with [2,4,6] through element '2', and [2,4,6] is 'associated' with [6,7,8] through element '6'
+[10,11,12] is 'associated' with [12,24,36] through element '12'
+
+Note that [1,2,3] is not directly 'associated' with [6,7,8]; this function considers implicit 'association' through the intermediary [2,4,6]
+"""
+function associate(Array::Vector{Any})
+
     global dummy = []
-    push!(dummy,Vector[1])
-    splice!(Vector,1)
+    push!(dummy,Array[1])
+    splice!(Array,1)
 
     final = []
 
-    if size(Vector)[1] == 0
-        push!(final,dummy)
-    else
-        while size(Vector)[1] != 0
-            super_break = false
+    while size(Array)[1] != 0
+        super_break = false
 
-            for i in range(1,stop=size(dummy)[1])
-                for j in range(1,stop=size(Vector)[1])
-                    var1 = dummy[i][1]
-                    var2 = Vector[j][1]
+        for i in range(1,stop=size(dummy)[1])
+            for j in range(1,stop=size(Array)[1])
+                var1 = dummy[i][1]
+                var2 = Array[j][1]
 
-                    common = intersect(var1,var2)
+                common = intersect(var1,var2)
 
-                    if size(common)[1] != 0 # there exists a common object
-                        push!(dummy,Vector[j])
-                        splice!(Vector,j)
-                        super_break = true
-                        break
-                    end
-
-                    if i == size(dummy)[1] && j == size(Vector)[1] # no more common objects between original vector and vector of associated objects
-                        push!(final,dummy)
-                        global dummy = []
-                        push!(dummy,Vector[1])
-                        splice!(Vector,1)
-                    end
-                    
-                end
-
-                if super_break
+                if size(common)[1] != 0 # there exists a common object
+                    push!(dummy,Array[j])
+                    splice!(Array,j)
+                    super_break = true
                     break
                 end
-            end
 
-            if size(Vector)[1] == 0
-                push!(final,dummy)
-            end
-
-        end
-
-    end
-
-    return final
-end
-
-# Function for forming >4 sided polygons. "vector" is a Vector of all the points, and their associated
-# circles, that form one or more >4 sided polygons.
-#
-# Each row in "vector" is of the form [[circle1,circle2], [point]], where circle1 and circle2 are the circles that intersect
-# to form point.
-#
-# In the 'associate' function above, we start at the first point (first row of 'vector') and iterate through 'vector', looking for 
-# another point that shares an associated circle with the first point. Once found, we repeat this process again, looking for an 
-# associated circle with the second point, and so on.
-#
-# The key problem with this is that if we have 2 >4 sided polygons that share a common circle, the function groups them together as 
-# one big >4 sided polygon. This will produce errors.
-# 
-# Our 'associate2' function works around this problem by taking advantage of the fact that for any single polygon, a circle
-# can only be used to link 2 points, and only 2 points, together.
-#
-# Hence, we can iterate through 'vector' as before. While iterating, we store the circles that have already been visited. So we 
-# only look for points that are associated with a circle not already visited. We also know that the last point in a polygon has 
-# to be associated with one of the circles associated with the first point. In particular, this circle is the circle that was not 
-# used to find the second point in the polygon.
-# 
-# Once we cannot find any more associated points, we check if the last point is associated with the first point through the circle 
-# that was not used to find the second point from the first point. If the circles do not match, we shuffle our vector and try again.
-function associate2(vector)
-    myvect = copy(vector)
-    dummy = []
-    visited = []
-    last_circle = []
-    final = []
-
-    push!(dummy, myvect[1])
-    splice!(myvect, 1)
-
-    while size(myvect)[1] > 0   # we iterate through myvect until all points have been assigned to a polygon
-        end_of_iterations = true    # marker to signal that all points for a particular polygon have been put into dummy
-        for i in range(1,stop=size(myvect)[1])
-            var1 = last(dummy)
-            var2 = myvect[i]
-
-            common = intersect(var1[1], var2[1]) # the common circle between 2 points
-
-            # a common circle exists that hasn't been previously visited
-            if size(common)[1] > 0 && (common[1] in visited) == false
-                if length(dummy) == 1 # second polygon point found, we now know what the associated circle for the last point is
-                    last_circle_index = findall(x -> x != common[1], var1[1])
-                    push!(last_circle, var1[1][last_circle_index][1])
+                if i == size(dummy)[1] && j == size(Array)[1] # no more common Association_Object(s) in Array
+                    push!(final,dummy)
+                    global dummy = []
+                    push!(dummy,Array[1])
+                    splice!(Array,1)
                 end
-                push!(dummy,var2) # push this point to dummy
-                splice!(myvect,i) # remove this point from myvect
-                push!(visited, common[1]) # add the common circle to vector of visited circles
-                end_of_iterations = false
+                
+            end
+
+            if super_break
                 break
             end
         end
 
-        # check if the last point in dummy shares the same circle as what we know the last point should
-        supposed_last = last(dummy)[1][findall(x -> x != last(visited), last(dummy)[1])[1]]
-        if supposed_last == last_circle[1] # if last point circle matches, polygon is formed
-            push!(final, dummy)
-            vector = myvect;
-
-            if size(myvect)[1] == 0
-                break
-            end
-
-            dummy = []
-            visited = []
-            last_circle = []
-
-            push!(dummy, myvect[1])
-            splice!(myvect, 1)
-        elseif end_of_iterations
-            vector = shuffle(vector)
-            myvect = copy(vector)
-
-            dummy = []
-            visited = []
-            last_circle = []
-
-            push!(dummy, myvect[1])
-            splice!(myvect, 1)
+        if size(Array)[1] == 0
+            push!(final,dummy)
         end
+
     end
 
     return final
 end
-
-
 
 end #module end
