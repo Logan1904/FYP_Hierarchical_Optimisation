@@ -1,4 +1,19 @@
-module Functions
+module Base_Functions
+
+export Circle
+export Point
+
+export make_circles
+export draw
+export distance
+export coincident
+export contained
+export intersection
+export outside
+export sort_asc_angle!
+export point_on_circle
+export shoelace
+export associate
 
 using LinearAlgebra
 using Random
@@ -109,7 +124,6 @@ function distance(x1::Float64,y1::Float64,x2::Float64,y2::Float64)
     return sqrt((x1-x2)^2 + (y1-y2)^2)
 end
 
-
 """
     coincident(A::Circle, B::Circle)
 
@@ -188,6 +202,18 @@ function outside(A::Circle,P::Point)
 end
 
 """
+    sort_asc_angle!(A::Circle, Array::Vector{Point})
+
+Sorts a Vector of Points relative to a Circle in ascending order of polar angle
+"""
+function sort_asc_angle!(A::Circle, Array::Vector{Point})
+    mean_x = A.x
+    mean_y = A.y
+
+    sort_acw!(Array,mean_x,mean_y)
+end
+
+"""
     sort_acw!(Array::Any, mean_x::Float64, mean_y::Float64)
 
 Sorts a Vector of Points and/or Circles in anticlockwise order
@@ -212,18 +238,6 @@ function sort_acw!(Array::Any,mean_x::Float64,mean_y::Float64)
 end
 
 """
-    sort_asc_angle!(A::Circle, Array::Vector{Point})
-
-Sorts a Vector of Points relative to a Circle in ascending order of polar angle
-"""
-function sort_asc_angle!(A::Circle, Array::Vector{Point})
-    mean_x = A.x
-    mean_y = A.y
-
-    sort_acw!(Array,mean_x,mean_y)
-end
-
-"""
     point_on_circle(A::Circle, Theta::Float64)
 
 Returns a Point on a Circle given a polar angle
@@ -231,7 +245,7 @@ Returns a Point on a Circle given a polar angle
 function point_on_circle(A::Circle,Theta::Float64)
     x = A.x + A.R*cos(Theta)
     y = A.y + A.R*sin(Theta)
-    return Functions.Point(x,y,[],0)
+    return Point(x,y,[],0)
 end
 
 """
@@ -248,28 +262,6 @@ function shoelace(Points::Any)
 
     area = 0.5*broadcast(abs,(dum1-dum2))
     
-    return area
-end
-
-"""
-    area_sector(A::Circle, Theta1::Float64, Theta2::Float64)
-
-Returns the area of a circular sector, described by a Circle and two polar angles
-
-Arguments:
-    - 'A::Circle':              Circle
-    - 'Theta1::Float64':        Start polar angle of circular sector
-    - 'Theta2::Float64':        End polar angle of circular sector
-"""
-function area_sector(A::Circle,Theta1::Float64,Theta2::Float64)
-    if Theta1 > Theta2
-        Theta2 += 2*pi
-    end
-
-    angle = Theta2 - Theta1
-
-    area = 0.5 * A.R^2 * angle
-
     return area
 end
 
