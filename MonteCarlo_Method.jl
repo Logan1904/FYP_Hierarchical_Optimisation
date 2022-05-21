@@ -2,7 +2,7 @@ module MonteCarlo_Method
 
 using Base_Functions
 
-function Area(arr,N_MC; print::Bool=false)
+function Area(arr,N_MC)
     circles = make_circles(arr)
 
     max_x = max([point.x + point.R for point in circles]...)
@@ -11,7 +11,7 @@ function Area(arr,N_MC; print::Bool=false)
     min_y = min([point.y - point.R for point in circles]...)
 
     count = 0
-    for i in range(1,stop=N_MC)
+    for i in 1:N_MC
         point_x = rand(1)[1]*(max_x-min_x)+min_x
         point_y = rand(1)[1]*(max_y-min_y)+min_y
 
@@ -21,7 +21,7 @@ function Area(arr,N_MC; print::Bool=false)
             A = circles[j]
 
             if !(outside(A,P)) #point inside a circle
-                count = count + 1
+                count += 1
                 break
             end
         end
@@ -29,9 +29,7 @@ function Area(arr,N_MC; print::Bool=false)
     end
 
     area = count/N_MC * ((max_x-min_x)*(max_y-min_y))
-    if print
-        println("Total Area (MonteCarlo): ",area)
-    end
+
     return area
 end
 

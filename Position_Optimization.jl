@@ -4,6 +4,7 @@ using DirectSearch
 using Greens_Method
 
 function define_problem(z, obj, cons_ext, cons_prog, N_iter)
+
     # Define optimization problem
     p = DSProblem(length(z))
     SetInitialPoint(p, z)
@@ -22,7 +23,7 @@ function define_problem(z, obj, cons_ext, cons_prog, N_iter)
 end
 
 function optimize(p)
-    # Optimize
+    
     Optimize!(p)
 
     # After optimization, return feasible or infeasible solution
