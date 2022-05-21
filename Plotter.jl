@@ -5,33 +5,23 @@ export Plot
 using Base_Functions
 using Plots
 
-function Plot(circles, intersections, polygons, sectors, domain, string)
+function Plot(circles, intersections, sectors, domain, string)
     p = plot(minorgrid=true, minorgridalpha=0.25)
     domain_x,domain_y = domain
-    #plot circles
+
+    # plot circles
     for i in range(1,stop=length(circles))
         plot!(draw(circles[i],0.0,2*pi), aspect_ratio=1, label="", color="black", ylim=(0,domain_y), xlim=(0,domain_x), legend=:outertopright)
     end
 
-    #plot intersection points
+    # plot intersection points
     for i in range(1,stop=length(intersections))
         point = intersections[i]
         color = "blue"
         plot!([point.x],[point.y], seriestype=:scatter, label="", color=color)
     end
 
-    #plot polygons
-    for i in range(1,stop=size(polygons)[1])
-        xarr = [point.x for point in polygons[i]]
-        yarr = [point.y for point in polygons[i]]
-
-        append!(xarr,xarr[1])
-        append!(yarr,yarr[1])
-
-        plot!(xarr,yarr,color="magenta", label="")
-    end
-
-    #plot circular sectors
+    # plot circular sectors
     palette = ["red", "magenta", "green", "orange","yellow"]
     for i in 1:length(sectors)
         shade = palette[mod1(i,length(palette))]
@@ -40,12 +30,9 @@ function Plot(circles, intersections, polygons, sectors, domain, string)
             alpha = (1/j)
 
             for k in 1:length(sectors[i][j])
-
                 plot!(draw(sectors[i][j][k][1],sectors[i][j][k][4],sectors[i][j][k][5]), label="", color=shade, linealpha=alpha)
-
             end
         end
-
     end
 
     savefig(string)
