@@ -180,6 +180,7 @@ end
     intersection(A::Circle, B::Circle)
 
 Returns the intersection coordinates of 2 Circles, in order 'x1,y1,x2,y2'
+
 Returns 'nothing' if the 2 Circles do not intersect or are tangent
 
 # Arguments:
@@ -340,8 +341,9 @@ Output = [
     [[[10,11,12],D], [[12,24,36],E]]
 ]
 
-Explanation:
+## Explanation:
 [1,2,3] is 'associated' with [2,4,6] through element '2', and [2,4,6] is 'associated' with [6,7,8] through element '6'
+
 [10,11,12] is 'associated' with [12,24,36] through element '12'
 
 Note that [1,2,3] is not directly 'associated' with [6,7,8]; this function considers implicit 'association' through the intermediary [2,4,6]
