@@ -23,7 +23,8 @@ using Random
 
 A circle object
 
-Attributes:
+# Attributes:
+
     - 'x::Float64':             x-position of the circle centre on a 2D Cartesian grid
     - 'y::Float64':             y-position of the circle centre on a 2D Cartesian grid
     - 'R::Float64':             Radius
@@ -46,7 +47,8 @@ end
 
 A point object
 
-Attributes:
+# Attributes:
+
     - 'x::Float64':             x-position of the point on a 2D Cartesian grid
     - 'y::Float64':             y-position of the point on a 2D Cartesian grid
     - 'Circles::Vector{Int}':   Vector of circle indices that form point
@@ -65,7 +67,8 @@ end
 
 Returns a Vector of Circle objects
 
-Arguments:
+# Arguments:
+
     - 'arr::{Vector{Float64}}': Vector of x,y coordinates with radii values, in the order [x;y;R]
 """
 function make_circles(arr::Vector{Float64})
@@ -87,7 +90,8 @@ end
 
 Returns 2 vectors of discretised x and y coordinates of points on the circle between the angles
 
-Arguments:
+# Arguments:
+
     - 'A::Circle': A Circle object
     - 'theta1::Float64': First angle
     - 'theta2::Float64': Second angle
@@ -107,7 +111,8 @@ end
 
 Returns the Euclidean distance between 2 Circle centres
 
-Arguments:
+# Arguments:
+
     - 'A::Circle': First Circle object
     - 'B::Circle': Second Circle object
 """
@@ -120,7 +125,8 @@ end
 
 Returns the Euclidean distance between the 2 points (x1,y1) and (x2,y2)
 
-Arguments:
+# Arguments:
+
     - 'x1::Float64': x-coordinate of the first point
     - 'y1::Float64': y-coordinate of the first point
     - 'x2::Float64': x-coordinate of the second point
@@ -135,7 +141,8 @@ end
 
 Returns 'true' if the 2 Circles are coincident, 'false' otherwise
 
-Arguments:
+# Arguments:
+
     - 'A::Circle': First Circle object
     - 'B::Circle': Second Circle object
 """
@@ -153,7 +160,8 @@ end
 
 Checks if a Circle is contained by another and modifies the attribute 'Circle.Contained' accordingly
 
-Arguments:
+# Arguments:
+
     - 'A::Circle': First Circle object
     - 'B::Circle': Second Circle object
 """
@@ -174,7 +182,8 @@ end
 Returns the intersection coordinates of 2 Circles, in order 'x1,y1,x2,y2'
 Returns 'nothing' if the 2 Circles do not intersect or are tangent
 
-Arguments:
+# Arguments:
+
     - 'A::Circle': First Circle object
     - 'B::Circle': Second Circle object
 """
@@ -210,7 +219,8 @@ end
 
 Returns 'true' if Point P is inside Circle A, 'false' otherwise
 
-Arguments:
+# Arguments:
+
     - 'A::Circle': The Circle object
     - 'P::Point': The Point object
 """
@@ -227,7 +237,8 @@ end
 
 Sorts a Vector of Points relative to a Circle (centre) in ascending order of polar angle
 
-Arguments:
+# Arguments:
+
     - 'A::Circle': The Circle object
     - 'Array::Vector{Point}': The vector of Point objects
 """
@@ -243,7 +254,8 @@ end
 
 Sorts a Vector of Points and/or Circles around the (x,y) coordinates in anticlockwise order
 
-Arguments:
+# Arguments:
+
     - 'Array::Any': A vector of either Circle or Point objects
     - 'x::Float64': x-coordinate
     - 'y::Float64': y-coordinate
@@ -272,7 +284,8 @@ end
 
 Returns a Point on a Circle given a polar angle
 
-Arguments:
+# Arguments:
+
     -'A::Circle': The Circle object
     -theta::Float64': The angle value (rad)
 """
@@ -287,7 +300,8 @@ end
 
 Returns the area of a polygon described by a sorted Vector of Points using the Shoelace algorithm
 
-Arguments:
+# Arguments:
+
     -Array::Vector{Point}': A vector of Point objects
 """
 function shoelace(Array::Vector{Point})
@@ -307,10 +321,11 @@ end
 
 Returns a vector, with each row containing rows in Array that have links between the Association_Object(s)
 
-Arguments:
+# Arguments:
+
     'Array::Vector{Any}': A vector with each row of the form [[Association_Object(s)], Link_Object]
     
-Example:
+# Example:
 
 Input = [
     [[1,2,3],A],
