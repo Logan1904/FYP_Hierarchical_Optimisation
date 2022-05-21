@@ -179,14 +179,11 @@ end
 
 Returns 'true' if Point P is inside Circle A, 'false' otherwise
 """
-function boundary(A::Circle,P::Point)
-    x = P.x
-    y = P.y
-    
-    if round((x-A.x)^2 + (y-A.y)^2 - A.R^2, digits=8) < 0
-        return false
-    else 
+function outside(A::Circle,P::Point)
+    if round((P.x-A.x)^2 + (P.y-A.y)^2 - A.R^2, digits=2) >= 0.0
         return true
+    else 
+        return false
     end
 end
 

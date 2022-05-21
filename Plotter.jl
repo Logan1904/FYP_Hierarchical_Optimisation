@@ -15,7 +15,7 @@ function plot_domain(circles,domain,string)
 end
 
 function plot_all(circles, intersections, polygons, sectors, domain, string)
-    p = plot()
+    p = plot(minorgrid=true, minorgridalpha=0.25)
     domain_x,domain_y = domain
     #plot circles
     for i in range(1,stop=length(circles))
@@ -27,8 +27,6 @@ function plot_all(circles, intersections, polygons, sectors, domain, string)
         point = intersections[i]
         color = "blue"
         plot!([point.x],[point.y], seriestype=:scatter, label="", color=color)
-
-        
     end
 
     #plot polygons
@@ -43,8 +41,20 @@ function plot_all(circles, intersections, polygons, sectors, domain, string)
     end
 
     #plot circular sectors
-    for i in range(1,stop=size(sectors)[1])
-        plot!(Functions.draw(sectors[i][1],sectors[i][2],sectors[i][3]), label="", color="red")
+    palette = ["red", "magenta", "green", "orange","yellow"]
+    for i in 1:length(sectors)
+        shade = palette[mod1(i,length(palette))]
+
+        for j in 1:length(sectors[i])
+            alpha = (1/j)
+
+            for k in 1:length(sectors[i][j])
+
+                plot!(Functions.draw(sectors[i][j][k][1],sectors[i][j][k][4],sectors[i][j][k][5]), label="", color=shade, linealpha=alpha)
+
+            end
+        end
+
     end
 
     savefig(string)

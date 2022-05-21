@@ -18,9 +18,8 @@ function Area(arr,N_MC; print::Bool=false)
 
         for j in range(1,stop=size(circles)[1])
             A = circles[j]
-            inside = Functions.boundary(A,Point)
 
-            if !inside #point inside a circle
+            if !(Functions.outside(A,Point)) #point inside a circle
                 count = count + 1
                 break
             end
