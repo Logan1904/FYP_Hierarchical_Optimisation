@@ -2,12 +2,29 @@ module Position_Optimization
 
 using DirectSearch
 using Greens_Method
+using Base_Functions
 
-function define_problem(z, obj, cons_ext, cons_prog, N_iter)
+"""
+    optimize(input, obj, cons_ext, cons_prog, N_iter, R_lim, domain_x, domain_y)
+
+Optimize the problem using  the Mesh Adaptive Direct Search solver
+
+# Arguments:
+
+    - 'input': Initial point
+    - 'obj': Objective function
+    - 'cons_ext': Extreme constraints
+    - 'cons_prog': Progressive constraints
+    - 'N_iter': Number of iterations
+    - 'R_lim': Radius limit of circles
+    - 'domain_x': x domain size
+    - 'domain_y': y domain size
+"""
+function optimize(input, obj, cons_ext, cons_prog, N_iter, R_lim, domain_x, domain_y)
 
     # Define optimization problem
-    p = DSProblem(length(z))
-    SetInitialPoint(p, z)
+    global p = DSProblem(length(input))
+    SetInitialPoint(p, input)
     SetObjective(p, obj)
     SetIterationLimit(p, N_iter)
 
@@ -19,90 +36,78 @@ function define_problem(z, obj, cons_ext, cons_prog, N_iter)
         AddProgressiveConstraint(p, i)
     end
 
-    return p
-end
+    iter = 0
+    while true
+        Optimize!(p)
 
-function optimize(p)
-    
-    Optimize!(p)
-
-    # After optimization, return feasible or infeasible solution
-    if p.x === nothing
-        global result = p.i
-    else
-        global result = p.x
-    end
-
-    return result
-end
-
-function check_local_minima(z, obj, cons_ext, cons_prog, N_iter)
-    # Check: 
-    # 1) Any circles completely contained by another circle
-    # 2) Any circles have ONLY non-contour intersection points
-
-    N_drones = Int(length(z)/3)
-
-    iterate = Int(0)
-    while true && iterate < 10
-        _, circles, intersections = Polygonal_Method.Area(z, return_objects=true)
-
-        # 'contained' vector is Bool vector for each circle, if it's contained
-        contained = [i.Contained for i in circles]
-
-        # 'underneath' vector is vector of vector of point IDs for each circle
-        points_index = [i.Points for i in circles]
-        points = [intersections[i] for i in points_index]
-        underneath = []
-        for i in 1:length(points)
-            dum = [j.ID for j in points[i]]
-            if length(dum) > 0
-                push!(underneath, dum)
-            else
-                push!(underneath, [true])
-            end
+        # After optimization, return feasible or infeasible solution
+        if p.x === nothing
+            global result = p.i
+        else
+            global result = p.x
         end
+        
+        # check if any circles are contained
+        var,new_input = check(input,result, R_lim, domain_x, domain_y)
 
-        global circle_index_tochange = findall(x -> x == true, contained)
+        if var
+            SetInitialPoint(p, new_input)
+            BumpIterationLimit(p, i=N_iter)
 
-        # if every point on a circle is not a contour point, it is underneath other circles
-        for i in 1:length(underneath)
-            if all(!,underneath[i])
-                push!(circle_index_tochange, i)
-            end
-        end
-
-        unique!(circle_index_tochange)
-
-        if length(circle_index_tochange) == 0
+            println("Non-optimal solution (a circle is contained). REINITIALIZING...")
+            iter += 1
+        else
             break
         end
 
-        println("Some circles contained by others. Re-generating...")
-
-        for i in circle_index_tochange
-            # Generate new circle within its radius
-            x_old = z[i]
-            y_old = z[N_drones + i]
-            R_old = z[N_drones*2 + i]
-
-            x_new = rand(x_old-R_old:x_old+R_old)[1]
-            y_new = rand(y_old-R_old:y_old+R_old)[1]
-            R_new = 1.0
-
-            z[i] = x_new
-            z[N_drones + i] = y_new
-            z[N_drones*2 + i] = R_new
+        if iter > 10 # prevent infinite recusion if solution can't be found in 10 reinitializations
+            break
         end
-
-        # Defining new MADS problem as it performs better
-        p = define_problem(z, obj, cons_ext, cons_prog, N_iter)
-        z = optimize(p)
-        iterate += 1
     end
 
-    return z
+    return result
 
+end
+
+"""
+    check(input,output,R_lim,domain_x,domain_y)
+
+Checks if any Circle objects are contained by other circles, and regenerates them (randomly)
+"""
+function check(input,output,R_lim,domain_x,domain_y)
+    output_circles = make_circles(output)
+
+    N = length(output_circles)
+
+    new_input = copy(input)
+
+    is_contained = Vector{Bool}([false for i in 1:length(output_circles)])
+
+    for i in 1:length(output_circles)
+        for j in i+1:length(output_circles)
+            if contained(output_circles[i],output_circles[j]) == output_circles[i]
+                is_contained[i] = true
+            elseif contained(output_circles[i],output_circles[j]) == output_circles[j]
+                is_contained[j] = true
+            end
+        end
+    end
+
+    if any(is_contained)
+
+        for i in 1:length(output_circles)
+            # if circle is contained, regenerate it (randomly)
+            if is_contained[i] == true
+                new_input[i] = rand(R_lim:domain_x-R_lim)[1]
+                new_input[N + i] = rand(R_lim:domain_y-R_lim)[1]
+                new_input[2*N + i] = rand(1:R_lim)[1]
+            end
+        end
+
+        return true, new_input
+    else
+        return false, []
+    end
 end
 
 end # module end

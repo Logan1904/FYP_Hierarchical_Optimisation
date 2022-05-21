@@ -2,7 +2,7 @@ using Greens_Method
 using Position_Optimization
 
 # Parameters
-N = 10
+N = 15
 domain_x = 50
 domain_y = 50
 R_lim = 7
@@ -43,8 +43,7 @@ cons_ext = [cons1,cons2]
 cons_prog = []
 
 # Position optimization
-MADS_problem = Position_Optimization.define_problem(MADS_input, obj, cons_ext, cons_prog, N_iter)
-MADS_output = Position_Optimization.optimize(MADS_problem)
+MADS_output = Position_Optimization.optimize(MADS_input, obj, cons_ext, cons_prog, N_iter, R_lim, domain_x, domain_y)
 
 input_problem = Greens_Problem(MADS_input)
 output_problem = Greens_Problem(MADS_output)
