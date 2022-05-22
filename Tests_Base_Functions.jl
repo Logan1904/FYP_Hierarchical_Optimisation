@@ -55,9 +55,9 @@ end
 
 @testset "Outside Function" begin
     A = Circle(0,0,1,[],[])
-    Point1 = Point(0,1,[],false)
-    Point2 = Point(0,0,[],false)
-    Point3 = Point(1/sqrt(2),1/sqrt(2),[],false)
+    Point1 = Point(0,1,[])
+    Point2 = Point(0,0,[])
+    Point3 = Point(1/sqrt(2),1/sqrt(2),[])
 
     @test outside(A,Point1) == true
     @test outside(A,Point2) == false
@@ -73,7 +73,7 @@ end
     N = rand(2:1000,1)[1]
     angles = LinRange(0.,2*pi,N)
 
-    True_Points = [Point(x + R*cos(angle), y + R*sin(angle),[],false) for angle in angles]
+    True_Points = [Point(x + R*cos(angle), y + R*sin(angle),[]) for angle in angles]
 
     Output_Points = shuffle(True_Points)
     sort_asc_angle!(A,Output_Points)
@@ -82,13 +82,13 @@ end
 end;
 
 @testset "Shoelace Function" begin
-    square = [Point(-1,-1,[],false),
-              Point(-1,1,[],false),
-              Point(1,1,[],false),
-              Point(1,-1,[],false)]
+    square = [Point(-1,-1,[]),
+              Point(-1,1,[]),
+              Point(1,1,[]),
+              Point(1,-1,[])]
     
     x_circle, y_circle = draw(Circle(0,0,2,[],[]), 0.0, 2*pi)
-    circle = [Point(x_circle[i],y_circle[i],[],false) for i in 1:length(x_circle)]
+    circle = [Point(x_circle[i],y_circle[i],[]) for i in 1:length(x_circle)]
 
     @test shoelace(square) == 4
     @test isapprox(shoelace(circle), pi*2*2, atol=0.1)

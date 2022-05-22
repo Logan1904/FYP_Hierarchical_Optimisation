@@ -130,8 +130,8 @@ function getIntersections(circles::Vector{Circle})
                 x1,y1,x2,y2 = coords
 
                 # form the Point objects representing the intersection points
-                P1 = Point(x1,y1,[i,j],1)
-                P2 = Point(x2,y2,[i,j],1)
+                P1 = Point(x1,y1,[i,j])
+                P2 = Point(x2,y2,[i,j])
 
                 # check if P1 and P2 are outer contour points
                 for P in [P1,P2]
@@ -233,7 +233,7 @@ function getBoundaries(circles::Vector{Circle}, intersections::Vector{Point}, co
 
         # just the circle
         if size(contours[i])[1] == 1 
-            push!(contour_boundaries,[[contours[i][1],Point(0,0,[],0),Point(0,0,[],0),0.0,2*pi]])
+            push!(contour_boundaries,[[contours[i][1],Point(0,0,[]),Point(0,0,[]),0.0,2*pi]])
             push!(boundaries,contour_boundaries)
             continue
         end
@@ -326,22 +326,22 @@ Returns the area encompassed by the boundaries
     - 'boundaries::Vector{Vector{Vector{Vector{Any}}}}': Vector of boundaries
 """
 function calculateArea(boundaries::Vector{Vector{Vector{Vector{Any}}}})
-
     total_area = 0
 
     # for each collection
     for i in 1:length(boundaries)
-
         coll_area = []
 
-        # for each contour
+        # for each boundary
         for j in 1:length(boundaries[i])
             
+            # if only one arc in contour
             if length(boundaries[i][j]) == 1
                 push!(coll_area,pi*(boundaries[i][1][1][1].R)^2)
                 break
             end
 
+            # Vector of points to discretize arc
             vec = Vector{Point}()
 
             for k in 1:length(boundaries[i][j])
@@ -357,34 +357,30 @@ function calculateArea(boundaries::Vector{Vector{Vector{Vector{Any}}}})
                 angles = LinRange(theta1,theta2,101)
 
                 for l in angles
-
                     x = circle.x + circle.R*cos(l)
                     y = circle.y + circle.R*sin(l)
 
-                    P = Point(x,y,[],1)
+                    P = Point(x,y,[])
                     push!(vec,P)
 
                 end
-
             end
 
+            # add area of this boundary
             push!(coll_area, shoelace(vec))
-
         end
 
-        if length(coll_area) == 1
+        if length(coll_area) == 1           # one boundary in the collection
             total_area += coll_area[1]
-        else
+        else                                # several boundaries in collection -> biggest boundary - sum(all other boundaries)
             var,ind = findmax(coll_area)
             deleteat!(coll_area,ind)
 
             total_area += var - sum(coll_area)
         end
-
     end
 
     return total_area
-
 end
 
 end #module end

@@ -30,7 +30,6 @@ A circle object
     - 'R::Float64':             Radius
     - 'Points::Vector{Int}':    Vector of intersection point indices
     - 'Circles::Vector{Int}':   Vector of intersection circles indices
-
 """
 mutable struct Circle
     x::Float64
@@ -50,14 +49,11 @@ A point object
     - 'x::Float64':             x-position of the point on a 2D Cartesian grid
     - 'y::Float64':             y-position of the point on a 2D Cartesian grid
     - 'Circles::Vector{Int}':   Vector of circle indices that form point
-    - 'ID::Bool':               True if point is on outer contour
-
 """
 mutable struct Point
     x::Float64
     y::Float64
     Circles::Vector{Int}
-    ID::Bool
 end
 
 """
@@ -294,7 +290,7 @@ Returns a Point on a Circle given a polar angle
 function point_on_circle(A::Circle,theta::Float64)
     x = A.x + A.R*cos(theta)
     y = A.y + A.R*sin(theta)
-    return Point(x,y,[],0)
+    return Point(x,y,[])
 end
 
 """
