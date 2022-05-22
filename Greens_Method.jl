@@ -218,7 +218,7 @@ Returns boundaries::Vector{Vector{Vector{Vector{Any}}}}
 Vector{                 # Each row for a contour
     Vector{             # Each row for a boundary within said contour
         Vector{         # Each row for a circular arc within said boundary (a boundary is composed of multiple circular arcs)
-            Vector{}    # Contains 5 rows describing a circular arc, of form [Circle,Point1,Point2,theta1,theta2]
+            Vector{Any} # Contains 5 rows describing a circular arc, of form [Circle,Point1,Point2,theta1,theta2]
         }
     }
 }
