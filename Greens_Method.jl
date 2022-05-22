@@ -38,7 +38,6 @@ struct Greens_Problem
 
         new(original_circles,intersections,contours,boundaries,area)
     end
-
 end
 
 """
