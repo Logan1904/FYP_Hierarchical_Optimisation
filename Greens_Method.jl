@@ -113,7 +113,6 @@ Returns intersections::Vector{Point} containing the Point objects
 """
 function getIntersections(circles::Vector{Circle})
     intersections = Vector{Point}()
-    intersections_circles = []
     for i in 1:length(circles)
 
         for j in i+1:length(circles)
@@ -150,10 +149,8 @@ function getIntersections(circles::Vector{Circle})
                         dum = length(intersections)
                         push!(A.Points,dum)
                         push!(B.Points,dum)
-
                     end
                 end
-                
             end
         end
     end
