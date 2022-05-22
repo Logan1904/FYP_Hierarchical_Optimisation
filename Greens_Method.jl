@@ -325,7 +325,7 @@ Returns the area encompassed by the boundaries
 function calculateArea(boundaries::Vector{Vector{Vector{Vector{Any}}}})
     total_area = 0
 
-    # for each collection
+    # for each contour
     for i in 1:length(boundaries)
         coll_area = []
 
@@ -367,9 +367,9 @@ function calculateArea(boundaries::Vector{Vector{Vector{Vector{Any}}}})
             push!(coll_area, shoelace(vec))
         end
 
-        if length(coll_area) == 1           # one boundary in the collection
+        if length(coll_area) == 1           # one boundary in the contour
             total_area += coll_area[1]
-        else                                # several boundaries in collection -> biggest boundary - sum(all other boundaries)
+        else                                # several boundaries in contour -> biggest boundary - sum(all other boundaries)
             var,ind = findmax(coll_area)
             deleteat!(coll_area,ind)
 
