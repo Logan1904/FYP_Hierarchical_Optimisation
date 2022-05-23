@@ -38,6 +38,7 @@ function optimize(input, obj, cons_ext, cons_prog, N_iter, R_lim, domain_x, doma
 
     iter = 0
     while true
+        iter += 1
         Optimize!(p)
 
         # After optimization, return feasible or infeasible solution
@@ -46,23 +47,22 @@ function optimize(input, obj, cons_ext, cons_prog, N_iter, R_lim, domain_x, doma
         else
             global result = p.x
         end
-        
+
+        if iter > 10
+            break
+        end
+
         # check if any circles are contained
-        var,new_input = check(input,result, R_lim, domain_x, domain_y)
+        var,new_input = check(result, R_lim, domain_x, domain_y)
 
         if var
             SetInitialPoint(p, new_input)
             BumpIterationLimit(p, i=N_iter)
-
             println("Non-optimal solution (a circle is contained). REINITIALIZING...")
-            iter += 1
         else
             break
         end
 
-        if iter > 10 # prevent infinite recusion if solution can't be found in 10 reinitializations
-            break
-        end
     end
 
     return result
@@ -73,18 +73,21 @@ end
     check(input,output,R_lim,domain_x,domain_y)
 
 Checks if any Circle objects are contained by other circles, and regenerates them (randomly)
-"""
-function check(input,output,R_lim,domain_x,domain_y)
-    output_circles = make_circles(output)
 
+# Arguments:
+    - 'output': Concatenated vector of (x,y,R) values, obtained from MADS solver output
+    - 'R_lim': Radius limit on circles
+    - 'domain_x': x domain size
+    - 'domain_y': y domain size
+"""
+function check(output,R_lim,domain_x,domain_y)
+    output_circles = make_circles(output)
     N = length(output_circles)
 
-    new_input = copy(input)
+    is_contained = Vector{Bool}([false for i in 1:N])
 
-    is_contained = Vector{Bool}([false for i in 1:length(output_circles)])
-
-    for i in 1:length(output_circles)
-        for j in i+1:length(output_circles)
+    for i in 1:N
+        for j in i+1:N
             if contained(output_circles[i],output_circles[j]) == output_circles[i]
                 is_contained[i] = true
             elseif contained(output_circles[i],output_circles[j]) == output_circles[j]
@@ -95,16 +98,16 @@ function check(input,output,R_lim,domain_x,domain_y)
 
     if any(is_contained)
 
-        for i in 1:length(output_circles)
+        for i in 1:N
             # if circle is contained, regenerate it (randomly)
             if is_contained[i] == true
-                new_input[i] = rand(R_lim:domain_x-R_lim)[1]
-                new_input[N + i] = rand(R_lim:domain_y-R_lim)[1]
-                new_input[2*N + i] = rand(1:R_lim)[1]
+                output[i] = rand(R_lim:domain_x-R_lim)[1]
+                output[N + i] = rand(R_lim:domain_y-R_lim)[1]
+                output[2*N + i] = rand(1:R_lim)[1]
             end
         end
 
-        return true, new_input
+        return true, output
     else
         return false, []
     end
