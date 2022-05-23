@@ -10,15 +10,7 @@ motor_dist = 0.1750                              # distance between motors
 kf = 1.0                                         # motor force constant (motor force = kf*u)
 km = 0.0245                                      # motor torque constant (motor torque = km*u)
 
-MADS_input = [0.0,50.0,0.0,50.0,
-0.0,50.0,50.0,0.0,
-5.0,5.0,5.0,5.0]
-
-MADS_output = [50.0,0.0,50.0,0.0,
-50.0,0.0,0.0,50.0,
-5.0,5.0,5.0,5.0]
-
-N_drones = 4
+N_drones = N
 
 # Obtain initial and final states for all drones
 x_start = Trajectory_Optimization.MADS_to_ALTRO(MADS_input)
