@@ -15,7 +15,7 @@ function Area(arr,N_MC)
         point_x = rand(1)[1]*(max_x-min_x)+min_x
         point_y = rand(1)[1]*(max_y-min_y)+min_y
 
-        P = Point(point_x,point_y,[],false)
+        P = Point(point_x,point_y,[])
 
         for j in range(1,stop=size(circles)[1])
             A = circles[j]
