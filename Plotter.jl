@@ -11,7 +11,7 @@ function Plot(problem, domain, string)
     intersections = problem.intersections
     boundaries = problem.boundaries
 
-    plot(minorgrid=true, minorgridalpha=0.25)
+    plot(minorgrid=true, minorgridalpha=0.25, xlabel="x (m)", ylabel="y (m)")
 
     domain_x,domain_y = domain
 
@@ -28,19 +28,24 @@ function Plot(problem, domain, string)
     end
 
     # plot boundaries
-    palette = ["red", "magenta", "green", "orange","yellow"]
+    palette = ["blue", "orange", "green", "red", "purple", "pink", "gray", "olive", "cyan"]
+    iter = 1
     for i in 1:length(boundaries)
-        shade = palette[mod1(i,length(palette))]
-
         for j in 1:length(boundaries[i])
-            alpha = (1/j)
-
+            shade = palette[mod1(iter,length(palette))]
             for k in 1:length(boundaries[i][j])
-                plot!(draw(boundaries[i][j][k][1],boundaries[i][j][k][4],boundaries[i][j][k][5]), label="", color=shade, linealpha=alpha)
+
+                if k == length(boundaries[i][j])
+                    plot!(draw(boundaries[i][j][k][1],boundaries[i][j][k][4],boundaries[i][j][k][5]), label="C: $i, B: $j", color=shade)
+                else
+                    plot!(draw(boundaries[i][j][k][1],boundaries[i][j][k][4],boundaries[i][j][k][5]), label="", color=shade)
+                end
+
             end
+            
+            iter += 1
         end
     end
-
     savefig(string)
 end
 
