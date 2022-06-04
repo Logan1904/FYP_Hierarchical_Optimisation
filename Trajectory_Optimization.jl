@@ -1,21 +1,155 @@
 module Trajectory_Optimization
 
+export Trajectory_Problem
+
 using TrajectoryOptimization
 using RobotDynamics
 using RobotZoo: Quadrotor
 using StaticArrays, Rotations, LinearAlgebra
 using Altro
 
-# Function to change MADS vector structure to ALTRO vector structure
-function MADS_to_ALTRO(z)
-    N_drones = Int(length(z)/3)
-    FOV = 90/180*pi    
-                 # FOV of the sensor
-    x = []
-    for i in range(1,stop=N_drones)
+"""
+    struct Trajectory_Problem
+
+An object describing an MAV
+
+Attributes:
+    - 'Mass::Float64': Mass
+    - 'J::Diagonal': Diagonal mass inertia matrix
+    - 'Gravity::SVector': Gravity vector
+    - 'Motor_Distance::Float64': Motor distance
+    - 'kf::Float64': Motor force constant
+    - 'km::Float64': Motor moment constant
+    - 'Model::Quadrotor': Dynamics model
+    - 'StateHistory::Vector{RBState}': Vector of the state history
+    - 'PredictedStates::Vector{RBState}': Vector of the future predicted states
+    - 'FinalState::RBState': Final intended state
+
+"""
+mutable struct Trajectory_Problem
+    Mass::Float64
+    J::Diagonal
+    Gravity::SVector
+    Motor_Distance::Float64
+    kf::Float64
+    km::Float64
+    Model::Quadrotor
+
+    StateHistory::Vector{RBState}
+    PredictedStates::Vector{RBState}
+
+    FinalState::RBState
+    
+
+    function Trajectory_Problem(Mass::Float64,J::Diagonal,Gravity::SVector,Motor_Distance::Float64,kf::Float64,km::Float64,InitialState::RBState,FinalState::RBState)
+        Model = Quadrotor(mass=Mass, J=J, gravity=Gravity, motor_dist=Motor_Distance, kf=kf, km=km)
+
+        new(Mass, J, Gravity, Motor_Distance, kf, km, Model, [InitialState], [], FinalState)
+    end
+
+end
+
+"""
+    converge(MAV::Trajectory_Problem)
+
+Returns the Euclidean distance of the MAV from its FinalState
+"""
+function converge(MAV::Trajectory_Problem)
+    current_position = MAV.StateHistory[end][1:3]
+    final_position = MAV.FinalState[1:3]
+    
+    distance = sqrt(sum((current_position-final_position).^2))
+
+    return distance
+end
+
+"""
+    optimize(MAV::Trajectory_Problem, tf::Float64, Nt::Int64, collision::Vector{Any})
+
+Performs a trajectory optimization of the MAV from StateHistory[end] (current state) to FinalState
+
+# Arguments:
+
+    - 'tf::Float64': Time horizon
+    - 'Nt::Int64': Number of timesteps
+    - 'collision::Vector{Any}': Vector of form [Boolean,[x,y,z]], where the Boolean value describes if a collision is imminent with any other MAVs at the location (x,y,z)
+"""
+function optimize(MAV::Trajectory_Problem, tf::Float64, Nt::Int64, collision::Vector{Any})
+
+    x0 = SVector(MAV.StateHistory[end])
+    xf = SVector(MAV.FinalState)
+
+    n,m = size(MAV.Model)
+
+    # Initialize cost function
+    Q = Diagonal(@SVector fill(1., n))
+    R = Diagonal(@SVector fill(5., m))
+    H = @SMatrix zeros(m, n)
+    q = -Q*xf
+    r = @SVector zeros(m)
+    c = xf'*Q*xf/2
+
+    cost = QuadraticCost(Q, R, H, q, r, c)
+
+    objective = Objective(cost,Nt)
+
+    # Constraints
+    cons = ConstraintList(n,m,Nt)
+
+    x_min = [-10.0,-10.0,0.0,-2.0,-2.0,-2.0,-2.0,-5.0,-5.0,-5.0,-1.5,-1.5,-1.5]
+    x_max = [60.0,60.0,15.0,2.0,2.0,2.0,2.0,5.0,5.0,5.0,1.5,1.5,1.5]
+
+    add_constraint!(cons, BoundConstraint(n,m, x_min=x_min, x_max=x_max), 1:Nt-1)
+
+    # Add collision constraints if present
+    if collision[1] == true
+        x,y,z = collision[2]
+        add_constraint!(cons, SphereConstraint(n, [x], [y], [z], [2.0]), 1:Nt)
+    end
+
+    prob = Problem(MAV.Model, objective, xf, tf, x0=x0, constraints=cons)
+
+    # State initialization: linear trajectory from start to end
+    # Control initialization: hover
+    state_guess = zeros(Float64, (n,Nt))
+    control_guess = zeros(Float64, (m,Nt-1))
+
+    hover = zeros(MAV.Model)[2]
+
+    for i in 1:Nt-1
+        state_guess[:,i] = x0 + (xf-x0)*(i-1)/(Nt-1)
+        control_guess[:,i] = hover
+    end
+
+    state_guess[:,Nt] = xf
+
+    initial_states!(prob, state_guess)
+    initial_controls!(prob, control_guess)
+    
+    altro = ALTROSolver(prob)
+
+    solve!(altro);
+
+    X = states(altro)
+
+    MAV.PredictedStates = X
+    push!(MAV.StateHistory,X[2])
+end
+
+"""
+    MADS_to_ALTRO(z::Vector{Float64})
+
+Transforms our MADS data structure to the ALTRO data structure
+"""
+function MADS_to_ALTRO(z::Vector{Float64})
+    N = Int(length(z)/3)
+    FOV = pi/2
+
+    x = Vector{RBState}()
+    for i in range(1,stop=N)
         x_val = z[i]
-        y_val = z[N_drones + i]
-        R_val = z[N_drones*2 + i]
+        y_val = z[N + i]
+        R_val = z[N*2 + i]
 
         z_val = 2*R_val/FOV
 
@@ -25,110 +159,21 @@ function MADS_to_ALTRO(z)
     return x
 end
 
-# Collision Avoidance
-function collide(x,i,j)
-    
-    for k in 3:size(x)[3]
-        x1,y1,z1 = x[i,1:3,k]
-        x2,y2,z2 = x[j,1:3,k]
+"""
+    collide(MAV1::Trajectory_Problem, MAV2::Trajectory_Problem, R_C::Float64, Nt::Int64)
 
-        distance = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2-z1)^2)
-
-        if distance < 2.0
-            return true, [x1,y1,z1], [x2,y2,z2]
-            break
+Checks if MAV1 is going to collide (defined by R_C) based on their future predicted states
+Returns a Boolean value describing if collision is imminent, and the (x,y,z) positions of the 2 MAVs -> to be inserted in the 'collision' vector
+"""
+function collide(MAV1::Trajectory_Problem,MAV2::Trajectory_Problem,R_C::Float64,Nt::Int64)
+    for k in 1:Nt   
+        predicted_distance = sqrt(sum((MAV1.PredictedStates[k][1:3] - MAV2.PredictedStates[k][1:3]).^2))
+        if predicted_distance <= R_C
+            return true, MAV1.PredictedStates[k][1:3], MAV2.PredictedStates[k][1:3]
         end
-
     end
 
     return false, [], []
-
 end
-
-function optimize(mass, J, gravity, motor_dist, kf, km, x_initial, x_final, tf, Nt, collision)
-    N_drones = length(x_initial)
-
-    model = Quadrotor(mass=mass, J=J, gravity=gravity, motor_dist=motor_dist, kf=kf, km=km)
-    n,m = size(model)
-
-    # Matrix of states; 1st dim = drone, 2nd dim = states, 3rd dim = time
-    X = zeros(Float64, (N_drones, 13, Nt))
-    # Matrix of controls; 1st dim = drone, 2nd dim = control input, 3rd dim = time
-    U = zeros(Float64, (N_drones, 4, Nt-1))
-
-    for i in 1:N_drones # for the i'th drone
-        # initial and final conditions
-        x0 = SVector{13, Float64}(x_initial[i])
-        xf = SVector{13, Float64}(x_final[i])
-
-        # objective
-        Q = Diagonal(@SVector fill(10., n))
-        R = Diagonal(@SVector fill(10., m))
-        H = @SMatrix zeros(m,n)
-        q = -Q*xf
-        r = @SVector zeros(m)
-        c = xf'*Q*xf/2
-
-        cost1 = QuadraticCost(Q, R, H, q, r, c)
-
-        objective = Objective(cost1, Nt)
-
-        # constraints
-        cons = ConstraintList(n,m,Nt)
-
-        u_min = zeros(4)
-        u_max = fill(5.0,4)
-        x_min = [-10.0,-10.0,0.0,-2.0,-2.0,-2.0,-2.0,-5.0,-5.0,-5.0,-5.0,-5.0,-5.0]
-        x_max = [60.0,60.0,15.0,2.0,2.0,2.0,2.0,5.0,5.0,5.0,5.0,5.0,5.0]
-
-        add_constraint!(cons, BoundConstraint(n,m, x_min=x_min, x_max=x_max), 1:Nt-1)
-
-        if collision[i][1] == true
-            x,y,z = collision[i][2]
-            add_constraint!(cons, SphereConstraint(n, [x], [y], [z], [1.5]), 1:Nt)
-        end
-
-        prob = Problem(model, objective, xf, tf, x0=x0, constraints=cons)
-
-        # initialization
-        # State initialization: linear trajectory from start to end
-        # Control initialization: hover
-        X0 = zeros(Float64, (n,Nt))
-        U0 = zeros(Float64, (m,Nt-1))
-
-        hover = zeros(model)[2]
-
-        for i in 1:Nt-1
-            X0[:,i] = x0 + (xf-x0)*(i-1)/(Nt-1)
-            U0[:,i] = hover
-        end
-
-        X0[:,Nt] = xf
-
-        initial_states!(prob, X0)
-        initial_controls!(prob, U0)
-        
-        altro = ALTROSolver(prob)
-        set_options!(altro, max_cost_value = 1e30, penalty_initial=100)
-
-        solve!(altro);
-
-        global stats = altro.stats
-
-        # Store states
-        for k in 1:Nt
-            X[i,:,k] = states(altro)[k]
-        end
-        # Store controls
-        for k in 1:Nt-1
-            U[i,:,k] = controls(altro)[k]
-        end
-    end
-
-    return X, U, stats
-
-end
-
-
 
 end # module end
