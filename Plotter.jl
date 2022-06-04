@@ -1,4 +1,5 @@
 module Plotter
+using LaTeXStrings
 
 export Plot
 
@@ -36,7 +37,7 @@ function Plot(problem, domain, string)
             for k in 1:length(boundaries[i][j])
 
                 if k == length(boundaries[i][j])
-                    plot!(draw(boundaries[i][j][k][1],boundaries[i][j][k][4],boundaries[i][j][k][5]), label="Γ: $i, B: $j", color=shade)
+                    plot!(draw(boundaries[i][j][k][1],boundaries[i][j][k][4],boundaries[i][j][k][5]), label=L"Γ_%$i, B_%$j", color=shade)
                 else
                     plot!(draw(boundaries[i][j][k][1],boundaries[i][j][k][4],boundaries[i][j][k][5]), label="", color=shade)
                 end
