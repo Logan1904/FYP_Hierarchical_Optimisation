@@ -104,7 +104,7 @@ function optimize(MAV::Trajectory_Problem, tf::Float64, Nt::Int64, Nm::Int64, co
     # Add collision constraints if present
     if collision[1] == true
         x,y,z = collision[2]
-        add_constraint!(cons, SphereConstraint(n, [x], [y], [z], [2.0]), 1:Nt)
+        add_constraint!(cons, SphereConstraint(n, [x], [y], [z], [1.5]), 1:Nt)
     end
 
     prob = Problem(MAV.Model, objective, xf, tf, x0=x0, constraints=cons)

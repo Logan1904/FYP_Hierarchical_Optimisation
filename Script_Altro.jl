@@ -1,4 +1,4 @@
-using Trajectory_Optimization
+#using Trajectory_Optimization
 using StaticArrays, Rotations, LinearAlgebra
 using RobotZoo: Quadrotor
 using RobotDynamics
@@ -24,8 +24,8 @@ end
 hor = 3.0           # Prediction horizon length
 dt = 0.1            # Time-step length per horizon
 Nt = Int(hor/dt)+1  # Number of timesteps per horizon
-R_D = 5.0           # Danger radius
-R_C = 2.0           # Collision radius
+R_D = 10.0           # Danger radius
+R_C = 1.0           # Collision radius
 Nm = 5              # Number of applied time-steps
 
 
@@ -100,7 +100,7 @@ end
 using Plots
 
 # Static 3D plot
-p = plot(legend=:outertopright)
+p = plot(legend=:outertopright,minorgrid=true, minorgridalpha=0.25)
 for i in 1:N
     plot!(X[i][:,1],X[i][:,2],X[i][:,3],  markershape=:none, label="MAV $i", xlims=(0,50), ylims=(0,50), zlims=(0,15), xlabel="x (m)", ylabel="y (m)", zlabel="z (m)")
 end
