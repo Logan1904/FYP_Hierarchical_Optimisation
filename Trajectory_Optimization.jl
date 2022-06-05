@@ -74,7 +74,7 @@ Performs a trajectory optimization of the MAV from StateHistory[end] (current st
     - 'Nt::Int64': Number of timesteps
     - 'collision::Vector{Any}': Vector of form [Boolean,[x,y,z]], where the Boolean value describes if a collision is imminent with any other MAVs at the location (x,y,z)
 """
-function optimize(MAV::Trajectory_Problem, tf::Float64, Nt::Int64, collision::Vector{Any})
+function optimize(MAV::Trajectory_Problem, tf::Float64, Nt::Int64, Nm::Int64, collision::Vector{Any})
 
     x0 = SVector(MAV.StateHistory[end])
     xf = SVector(MAV.FinalState)
@@ -133,7 +133,12 @@ function optimize(MAV::Trajectory_Problem, tf::Float64, Nt::Int64, collision::Ve
     X = states(altro)
 
     MAV.PredictedStates = X
-    push!(MAV.StateHistory,X[2])
+
+    for i in 2:Nm
+        push!(MAV.StateHistory,X[i])
+    end
+
+    return altro.stats.tsolve
 end
 
 """

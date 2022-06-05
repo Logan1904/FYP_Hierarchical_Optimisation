@@ -21,17 +21,24 @@ for i in 1:N
 end
 
 # MPC optimization
-hor = 2.0           # Prediction horizon length
+hor = 3.0           # Prediction horizon length
 dt = 0.1            # Time-step length per horizon
 Nt = Int(hor/dt)+1  # Number of timesteps per horizon
 R_D = 5.0           # Danger radius
 R_C = 2.0           # Collision radius
+Nm = 5              # Number of applied time-steps
 
 
 total_converge = false # Check if all MAVs have converged
 collision = Vector{Any}(undef,N) # Vector describing collision constraints
 for i in 1:N
     collision[i] = [false,[]]
+end
+
+# Initialise vector for solution times
+my_time = Vector{Vector{Any}}(undef,N)
+for i in 1:N
+    my_time[i] = []
 end
 
 # Optimize
@@ -41,9 +48,10 @@ while total_converge == false
     # Optimize if MAV has not converged to final position
     for i in 1:N
         MAV = MAVs[i]
-        if Trajectory_Optimization.converge(MAV) > 1.0
+        if Trajectory_Optimization.converge(MAV) > 0.1
             global total_converge = false
-            Trajectory_Optimization.optimize(MAV,hor,Nt,collision[i])
+            t = Trajectory_Optimization.optimize(MAV,hor,Nt,Nm,collision[i])
+            push!(my_time[i],t)
         end
     end
 
@@ -91,14 +99,21 @@ end
 # Plot trajectories
 using Plots
 
+# Static 3D plot
 p = plot(legend=:outertopright)
 for i in 1:N
     plot!(X[i][:,1],X[i][:,2],X[i][:,3],  markershape=:none, label="MAV $i", xlims=(0,50), ylims=(0,50), zlims=(0,15), xlabel="x (m)", ylabel="y (m)", zlabel="z (m)")
 end
 
-q = plot()
-@gif for i in 1:longest
+# Animation plot
+anim = @animate for i in 1:longest
     for j in 1:N
-        plot!(X[j][1:i,1], X[j][1:i,2],X[j][1:i,3], label="", xlims=(0,50), ylims=(0,50), zlims=(0,15), xlabel="x (m)", ylabel="y (m)", zlabel="z (m)")
+        if j == 1
+            plot(X[j][1:i,1], X[j][1:i,2],X[j][1:i,3], label="", xlims=(0,50), ylims=(0,50), zlims=(0,15), xlabel="x (m)", ylabel="y (m)", zlabel="z (m)")
+        else
+            plot!(X[j][1:i,1], X[j][1:i,2],X[j][1:i,3], label="", xlims=(0,50), ylims=(0,50), zlims=(0,15), xlabel="x (m)", ylabel="y (m)", zlabel="z (m)")
+        end
     end
 end
+
+gif(anim,fps=10)
