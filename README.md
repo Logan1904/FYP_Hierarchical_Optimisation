@@ -9,7 +9,7 @@ We aim to **maximize the area covered** by the sensor regions of each MAV - mode
 
 Once we find the optimal positions, we plan smooth, **collision-free trajectories** from their initial to target positions using **Nonlinear Model Predictive Control (NMPC)**.
 
-[📄 View the Presentation (PDF)](https://Logan1904.github.io/FYP_Optimization/FYP.pdf)
+[📄 View the Presentation (PDF)](https://Logan1904.github.io/FYP_Hierarchical_Optimisation/FYP.pdf)
 
 ---
 
