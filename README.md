@@ -1,34 +1,80 @@
-# Final Year Project - Distributed Optimisation for Exploration and Trajectory Planning of Unmanned Aerial Vehicles
+# Distributed Optimisation for Exploration and Trajectory Planning of Unmanned Aerial Vehicles
 
-## Description
-My Final Year Project masters thesis. This project consists of a hierarchical control approach of a mutli-MAV system in the exploration of an environment. We seek to maximise the area encompassed by a set of circles; this represents the sensor regions of our MAVs, where the (x,y) position of a circle is the (x,y) position of an MAV, and the radius of a circle is related to the altitude of an MAV. Once the optimal circle positions, i.e. MAV positions, are obtained, we construct the MAV trajectories from their initial positions to the optimal positions using a Nonlinear Model Predictive Control scheme.
+## 🧠 Description
+This is my **Master’s Thesis** project. It presents a **hierarchical control framework** for a **multi-MAV (Multi-Agent Vehicle)** system tasked with exploring an environment.
 
-### Greens_Method.jl
-A function to obtain the union of the area of N intersecting circles. This algorithm works by identifying the boundaries of the circles, and calculates the union area of these circles based on Greens Theorem. This function is inspired by the StackOverflow posts by Ants Aasma & Timothy Shields @ https://stackoverflow.com/questions/1667310/combined-area-of-overlapping-circles
+We aim to **maximize the area covered** by the sensor regions of each MAV - modelled as circles.  
+- The **(x, y)** position of each circle represents the **position** of an MAV. 
+- The **radius** depends on the **altitude** (sensor footprint)
 
-### Position_Optimization.jl
-A module for maximising the objective function Greens_Method, i.e. optimises Greens_Method to obtain the position of the circles that maximises the union area encompassed by the circles. The optimisation is performed using an algorithm of the Mesh Adaptive Direct Search class developed by Imperial College London, found @ https://github.com/ImperialCollegeLondon/DirectSearch.jl
+Once we find the optimal positions, we plan smooth, **collision-free trajectories** from their initial to target positions using **Nonlinear Model Predictive Control (NMPC)**.
 
-### Trajectory_Optimization.jl
-A module for performing trajectory optimisation using the Altro solver, found @ https://github.com/RoboticExplorationLab/Altro.jl; the initial MAV positions are supplied and the final MAV positions is the output from Position_Optimization. We construct the trajectories using an Nonlinear Model Predictive Control scheme, with non-linear dynamics for the MAVs. Collision avoidance is implemented using spherical constraints and an algorithm that allows communication between MAVs only when they are within a "danger distance" from each other.
+[📄 View the Presentation (PDF)](https://Logan1904.github.io/FYP_Optimization/FYP.pdf)
 
-### MonteCarlo_Method.jl
-A function to obtain the union of the area of N intersecting circles using a MonteCarlo approximation method.
+---
 
-### Base_Functions.jl
-Contains all the base functions used .
+## 🧩 Modules
 
-### Plotter.jl
-Plots our described problem for visualisation.
+### 🟢 `Greens_Method.jl`
+Calculates the union area of overlapping circles using **Green's Theorem**.  
+Inspired by the StackOverflow posts by Ants Aasma & Timothy Shields:  
+👉 [StackOverflow link](https://stackoverflow.com/questions/1667310/combined-area-of-overlapping-circles)
 
-### Script_MADS.jl
-Script to run the positional optimization
-1) Generate N random circles in our defined domain
-2) Use MADS (objective function defined by Greens_Method.jl) to find optimum position of circles that maximise area
+---
 
-### Script_Altro.jl
-Script to run the trajectory optimization
-Given the initial and final positions from Script_MADS.jl, find the optimal trajectories from initial to final positions
+### 🎯 `Position_Optimization.jl`
+Maximizes the union area using the `Greens_Method` function.  
+Uses **Mesh Adaptive Direct Search (MADS)** algorithm:  
+🔗 [DirectSearch.jl](https://github.com/ImperialCollegeLondon/DirectSearch.jl)
 
-## How to run problem
-Run Script_MADS.jl, then without clearing the workspace, run Script_Altro.jl
+---
+
+### 🚀 `Trajectory_Optimization.jl`
+Optimizes MAV trajectories using the **Altro solver** with:
+- **Nonlinear dynamics**
+- **NMPC**
+- **Collision avoidance** via:
+  - Spherical constraints
+  - Additional local cost only when within a “danger distance”
+
+🔗 [Altro.jl](https://github.com/RoboticExplorationLab/Altro.jl)
+
+---
+
+### 🎲 `MonteCarlo_Method.jl`
+Uses **Monte Carlo simulation** to approximate union area of overlapping circles.
+
+---
+
+### 🧱 `Base_Functions.jl`
+Utility functions used across the project.
+
+---
+
+### 📊 `Plotter.jl`
+Visualizes the MAVs, circles, and trajectories for better understanding.
+
+---
+
+## 🛠️ Scripts
+
+### 📌 `Script_MADS.jl`
+1. Generates random circles  
+2. Runs MADS optimization to **maximize area**
+
+### 📌 `Script_Altro.jl`
+Takes output from `Script_MADS.jl` and:
+- Plans optimal trajectories  
+- Ensures **collision avoidance** and **dynamics compliance**
+
+---
+
+## ▶️ How to Run (Julia REPL)
+
+```julia
+# Step 1: Run positional optimization
+include("Script_MADS.jl")
+
+# Step 2: Without clearing workspace, run trajectory optimization
+include("Script_Altro.jl")
+```
