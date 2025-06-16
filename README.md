@@ -13,6 +13,11 @@ Once we find the optimal positions, we plan smooth, **collision-free trajectorie
 
 📄 [View the Presentation](https://Logan1904.github.io/FYP_Hierarchical_Optimisation/FYP.pdf)
 
+<p align="center">
+  <img src="cover_image.png" alt="Plot showing UAV coverage" width="500"/>
+</p>
+
+
 ---
 
 ## 🧩 Modules
